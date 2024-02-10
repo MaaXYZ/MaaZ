@@ -1,0 +1,31 @@
+{
+    "$schema": "../../pipeline.schema.json",
+    "start_up": {
+        "next":[
+            "click_link_start",
+            "click_start",
+            "sub_start_app"
+        ]
+    },
+    "click_start": {
+        "recognition": "TemplateMatch",
+        "template": "start/start_button.png",
+        "roi": [
+            600,
+            643,
+            79,
+            74
+        ],
+        "action": "Click",
+        "next": "click_link_start"
+    },
+    "click_link_start": {
+        "recognition": "OCR",
+        "text": "开始唤醒",
+        "action": "Click"
+    },
+    "sub_start_app": {
+        "action": "StartApp",
+        "package": "com.hyprgryph.arknights"
+    }
+}

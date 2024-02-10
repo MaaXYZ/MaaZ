@@ -1,0 +1,75 @@
+version: '3'
+
+tasks:
+  build-frontend:
+    desc: Build the frontend
+    cmd: pnpm run build
+    sources:
+      - src/**/*
+    generates:
+      - dist/**
+
+  setup-deps:
+    desc: Install and setup maafw for rust
+    cmd: python build_scripts/makedeps.py
+    sources:
+      - build_scripts/makedeps.py
+
+  build-backend-debug:
+    desc: Build the backend in debug mode
+    dir: src-tauri
+    cmds:
+      - task: setup-deps
+      - cargo build
+
+  build-backend-release:
+    desc: Build the backend in release mode
+    dir: src-tauri
+    cmds:
+      - task: setup-deps
+      - cargo build --release
+
+  package-debug:
+    desc: Package the app in debug mode
+    cmds:
+      - task: build-frontend
+      - task: build-backend-debug
+      - task: package
+        vars:
+          MODE: debug
+
+  package-release:
+    desc: Package the app in release mode
+    cmds:
+      - task: build-frontend
+      - task: build-backend-release
+      - task: package
+        vars:
+          MODE: release
+
+  package:
+    internal: true
+    cmd: python build_scripts/package.py {{.MODE}}
+    requires:
+      vars: [MODE]
+
+  build:
+    desc: Build the frontend and backend
+    cmds:
+      - task: build-frontend
+      - task: build-backend-{{.MODE}}
+    requires:
+      vars: [MODE]
+
+  copy-bins-debug:
+    internal: true
+    cmd: python build_scripts/copy_bins.py debug
+    sources:
+      - build_scripts/copy_bins.py
+      - deps/maafw/bin
+
+  run-debug:
+    desc: Run the app in debug mode
+    cmds:
+      - task: copy-bins-debug
+      - pnpm run tauri dev
