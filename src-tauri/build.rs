@@ -1,5 +1,8 @@
-fn main() {
+#![allow(clippy::expect_used)]
+#![allow(clippy::absolute_paths)]
+#![allow(clippy::unwrap_used)]
 
+fn main() {
     println!("cargo:rustc-link-search=./lib");
 
     println!("cargo:rustc-link-lib=MaaFramework");
@@ -18,5 +21,5 @@ fn main() {
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
 
-    tauri_build::build()
+    tauri_build::build();
 }

@@ -28,4 +28,5 @@ src-tauri/config
 src-tauri/debug
 src-tauri/include
 src-tauri/lib
+src-tauri/MaaAgentBinary
 .task

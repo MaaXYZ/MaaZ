@@ -16,6 +16,10 @@ zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
 tauri = { version = "1.5", features = ["shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+tracing-appender = "0.2.3"
+tauri-plugin-window-state = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
@@ -25,8 +29,10 @@ custom-protocol = ["tauri/custom-protocol"]
 [lints.clippy]
 "pedantic" = "warn"
 
+"module-name-repetitions" = "allow"
+"enum_variant_names" = "allow"
+
 # from restriction group
-"absolute_paths" = "warn"
 "assertions_on_result_states" = "warn"
 "clone_on_ref_ptr" = "warn"
 "create_dir" = "warn"

@@ -9,4 +9,8 @@ export default class CommandInvoker {
     public static async initDevices():Promise<DeviceInfo[]> {
         return invoke("init_devices");
     }
+
+    public static async connectTo(device:DeviceInfo):Promise<void> {
+        return invoke("connect_to_device", {device});
+    }
 }
