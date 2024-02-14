@@ -22,14 +22,9 @@ def main():
             dst = os.path.join(targetDir, file)
             print("Copying " + src + " to " + dst)
             shutil.copy2(src, dst)
-    if not os.path.exists(agentTargteDir):
-        os.makedirs(agentTargteDir)
-    for root, dirs, files in os.walk(agentDir):
-        for file in files:
-            src = os.path.join(root, file)
-            dst = os.path.join(agentTargteDir, file)
-            print("Copying " + src + " to " + dst)
-            shutil.copy2(src, dst)
+    if os.path.exists(agentTargteDir):
+        shutil.rmtree(agentTargteDir)
+    shutil.copytree(agentDir, agentTargteDir)
 
 if __name__ == "__main__":
     main()

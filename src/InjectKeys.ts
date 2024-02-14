@@ -1,4 +1,6 @@
 import { InjectionKey } from "vue";
-import DeviceViewModel from "./viewmodel/DeviceViewModel";
+import TaskViewModel from "./viewmodel/TaskViewModel";
 
-export const deviceViewModelInjectKey = Symbol("deviceViewModel") as InjectionKey<DeviceViewModel>
+export const taskViewModelInjectKey = Symbol(
+    "taskViewModel"
+) as InjectionKey<TaskViewModel>;

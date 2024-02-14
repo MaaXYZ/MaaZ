@@ -2,30 +2,82 @@
     "$schema": "../../pipeline.schema.json",
     "start_up": {
         "next":[
-            "click_link_start",
-            "click_start",
+            "flag_in_app",
+            "sub_close_news",
+            "flag_in_app",
+            "sub_click_get_daily",
+            "flag_in_app",
+            "sub_click_link_start",
+            "sub_click_start",
             "sub_start_app"
         ]
     },
-    "click_start": {
+    "sub_click_start": {
+        "is_sub": true,
         "recognition": "TemplateMatch",
-        "template": "start/start_button.png",
+        "template": "startup/start_button.png",
         "roi": [
-            600,
+            601,
             643,
-            79,
-            74
+            75,
+            71
         ],
-        "action": "Click",
-        "next": "click_link_start"
+        "action": "Click"
     },
-    "click_link_start": {
+    "sub_click_link_start": {
+        "is_sub": true,
         "recognition": "OCR",
         "text": "开始唤醒",
         "action": "Click"
     },
     "sub_start_app": {
-        "action": "StartApp",
-        "package": "com.hyprgryph.arknights"
+        "is_sub": true,
+        "action": "StartApp"
+    },
+    "sub_click_get_daily": {
+        "is_sub": true,
+        "recognition": "TemplateMatch",
+        "template": "startup/get_daily.png",
+        "roi": [
+            599,
+            602,
+            82,
+            80
+        ],
+        "action": "Click",
+        "next": "close_daily"
+    },
+    "close_daily": {
+        "is_sub": true,
+        "recognition": "TemplateMatch",
+        "template": "startup/close_daily.png",
+        "roi": [
+            1176,
+            32,
+            80,
+            72
+        ],
+        "action": "Click"
+    },
+    "sub_close_news": {
+        "recognition": "TemplateMatch",
+        "template": "startup/close_news.png",
+        "roi": [
+            1162,
+            34,
+            83,
+            71
+        ],
+        "action": "Click"
+    },
+    "flag_in_app": {
+        "recognition": "TemplateMatch",
+        "template": "startup/in_app.png",
+        "roi": [
+            17,
+            8,
+            289,
+            60
+        ]
     }
 }

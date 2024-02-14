@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { computed, inject, ref } from "vue";
+import { computed, ref } from "vue";
 import DeviceInfo from "../interface/DeviceInfo";
+import { useDeviceStateStore } from "@/stores/DeviceStateStore";
 import { NFlex, NButton, NIcon, NTooltip } from "naive-ui";
 import { SendAlt, SendAltFilled } from "@vicons/carbon";
-import { deviceViewModelInjectKey } from "../InjectKeys";
 
 const props = defineProps<{
     device: DeviceInfo;
 }>();
 
-const deviceViewModel = inject(deviceViewModelInjectKey)!;
+const deviceStateStore = useDeviceStateStore();
 
 const deviceConnected = computed(() => {
     return (
-        deviceViewModel.connectedDevice?.adb_serial === props.device.adb_serial
+        deviceStateStore.connectedDevice?.adb_serial === props.device.adb_serial
     );
 });
 
@@ -21,7 +21,7 @@ const deviceConnecting = ref(false);
 
 function connectToDevice() {
     deviceConnecting.value = true;
-    deviceViewModel.connectTo(props.device).finally(() => {
+    deviceStateStore.connectTo(props.device).finally(() => {
         deviceConnecting.value = false;
     });
 }

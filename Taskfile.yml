@@ -62,7 +62,6 @@ tasks:
       vars: [MODE]
 
   copy-bins-debug:
-    internal: true
     cmd: python build_scripts/copy_bins.py debug
     sources:
       - build_scripts/copy_bins.py

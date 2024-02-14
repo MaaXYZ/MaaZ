@@ -1554,9 +1554,11 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-window-state",
+ "toml 0.8.10",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "uuid",
  "zip",
 ]
 

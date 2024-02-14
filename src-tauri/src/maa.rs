@@ -1,6 +1,7 @@
 #![allow(clippy::multiple_unsafe_ops_per_block)]
 #![allow(clippy::undocumented_unsafe_blocks)]
 #![allow(clippy::absolute_paths)]
+#![allow(unused)]
 
 mod internal {
     #![allow(non_upper_case_globals)]
@@ -14,18 +15,28 @@ mod internal {
 }
 
 use crate::{
+    callback::CallbackHandler,
     error::{MaaError, MaaResult},
-    model::DeviceInfo, InstHandle,
+    model::DeviceInfo,
+    task::{TaskParam, TaskType},
+    InstHandle,
 };
 #[allow(clippy::wildcard_imports)]
 use internal::*;
-use std::ptr::null_mut;
+use serde_json::json;
+use std::{
+    ffi::c_void,
+    mem,
+    ptr::{null, null_mut},
+};
+use tauri::AppHandle;
+use tracing::{error, event, info, trace, trace_span, Level};
+use uuid::Uuid;
 
 pub use internal::MaaInstanceAPI;
 
 pub fn get_version() -> MaaResult<String> {
-
-    tracing::trace!("Getting Maa version");
+    trace!("Getting Maa version");
 
     let version = unsafe { MaaVersion() };
     let version = unsafe { std::ffi::CStr::from_ptr(version) };
@@ -34,8 +45,8 @@ pub fn get_version() -> MaaResult<String> {
 }
 
 pub fn init() -> Vec<DeviceInfo> {
-
-    tracing::trace!("Initializing Maa");
+    let span = trace_span!("Initialize Maa");
+    let _guard = span.enter();
 
     unsafe {
         MaaToolkitInit();
@@ -43,11 +54,11 @@ pub fn init() -> Vec<DeviceInfo> {
     };
 
     let device_count = unsafe { MaaToolkitWaitForFindDeviceToComplete() };
+    info!("Found {} devices", device_count);
 
     (0..device_count)
         .map(|index| {
-
-            tracing::info!("Getting device info for index {}", index);
+            trace!("Getting device info for index {}", index);
 
             let device_name = unsafe { MaaToolkitGetDeviceName(index) };
             let device_name = maa_string_view_to_string(device_name);
@@ -74,63 +85,111 @@ pub fn init() -> Vec<DeviceInfo> {
         .collect()
 }
 
-pub fn get_maa_handle() -> MaaInstanceHandle {
-    tracing::info!("Creating Maa handle");
-    unsafe { MaaCreate(None, null_mut()) }
+pub fn get_maa_handle(app: AppHandle) -> MaaInstanceHandle {
+    let span = trace_span!("Creating Maa handle");
+    let _guard = span.enter();
+    let handler = CallbackHandler::new(app);
+
+    let callback_arg = Box::into_raw(Box::new(handler)).cast::<c_void>();
+
+    trace!("Creating Maa handle");
+    unsafe { MaaCreate(Some(callback_fn), callback_arg) }
 }
 
-pub fn init_resources(maa_handle: &InstHandle) {
-    tracing::trace!("Initializing Maa resources");
+pub fn init_resources(maa_handle: &InstHandle) -> MaaResult<()> {
+    let span = trace_span!("Initialize Maa resources");
+    let _guard = span.enter();
     let resource_handle = unsafe { MaaResourceCreate(None, null_mut()) };
     let resource_dir = to_cstring("resources");
     let resource_id = unsafe { MaaResourcePostPath(resource_handle, resource_dir) };
-    let ret = unsafe { MaaResourceWait(resource_handle, resource_id) };
+    let resource_ret = unsafe { MaaResourceWait(resource_handle, resource_id) };
 
-    tracing::debug!("Maa resource wait returned {}", ret);
-    tracing::trace!("Binding Maa resources");
-    unsafe { MaaBindResource(maa_handle.0, resource_handle) };
-    tracing::trace!("Maa resources initialized");
+    if resource_ret != MaaStatusEnum_MaaStatus_Success {
+        error!("Maa resource wait returned {}", resource_ret);
+        return Err(MaaError::ResourceInitError);
+    }
+
+    info!("Maa resource wait returned {}", resource_ret);
+    trace!("Binding Maa resources");
+    let bind_ret = unsafe { MaaBindResource(maa_handle.0, resource_handle) };
+    trace!("Maa resources initialized");
+
+    if bind_ret != 1 {
+        error!("Maa bind resource returned {}", bind_ret);
+        return Err(MaaError::ResourceBindError);
+    }
+
+    Ok(())
+}
+
+unsafe extern "C" fn callback_fn(
+    msg: MaaStringView,
+    details_json: MaaStringView,
+    handler: MaaTransparentArg,
+) {
+    trace!("Callback received");
+    let handler = handler.cast::<CallbackHandler>();
+
+    let msg = maa_string_view_to_string(msg);
+    let details = maa_string_view_to_string(details_json);
+
+    event!(Level::TRACE, msg=%msg, details=%details);
+
+    #[allow(clippy::unwrap_used)]
+    handler.as_ref().unwrap().handle_callback(msg, details);
 }
 
 pub fn connect_to_device(handle: &InstHandle, device_info: &DeviceInfo) -> u8 {
+    let span = trace_span!("Connect to device");
+    let _guard = span.enter();
 
-    tracing::info!("Connecting to device {}", device_info.name);
+    info!(device_name=%device_info.name, adb_serial=%device_info.adb_serial, adb_path=%device_info.adb_path, adb_config=%device_info.adb_config);
 
     let adb_path = to_cstring(&device_info.adb_path);
     let address = to_cstring(&device_info.adb_serial);
-    let type_ = device_info.controller_type;
+    let controller_type = MaaAdbControllerTypeEnum_MaaAdbControllerType_Input_Preset_Maatouch
+        | MaaAdbControllerTypeEnum_MaaAdbControllerType_Screencap_MinicapDirect;
     let config = to_cstring(&device_info.adb_config);
     let agent_path = to_cstring("MaaAgentBinary");
-    let callback = None;
-    let callback_arg = null_mut();
 
     let controller_handle = unsafe {
         MaaAdbControllerCreateV2(
             adb_path,
             address,
-            type_,
+            controller_type,
             config,
             agent_path,
-            callback,
-            callback_arg,
+            None,
+            null_mut(),
         )
     };
 
-    tracing::trace!("Binding controller to device");
-    let ret = unsafe { MaaBindController(handle.0, controller_handle) };
+    trace!("Posting connection to controller");
+    let ctrl_id = unsafe { MaaControllerPostConnection(controller_handle) };
+    info!("Got controller id {ctrl_id}");
 
-    tracing::trace!("Controller bound to device ret: {ret}");
+    trace!("Waiting for controller to connect");
+    unsafe { MaaControllerWait(controller_handle, ctrl_id) };
+
+    trace!("Binding controller to device");
+    let ret = unsafe { MaaBindController(handle.0, controller_handle) };
+    trace!("Controller bound to device ret: {ret}");
 
     ret
 }
 
-pub fn check_init_state(handle: MaaInstanceHandle) -> MaaResult<()> {
-    let state = unsafe { MaaInited(handle) };
-    if state == 0 {
-        Err(MaaError::MaaHandleInitError)
-    } else {
-        Ok(())
-    }
+pub fn post_task<T>(handle: &InstHandle, task_type: &TaskType, task_param: &T) -> i64
+where
+    T: TaskParam,
+{
+    let task = task_type.get_string();
+
+    let param = task_param.get_param();
+    let param = param.to_string();
+    trace!("Posting task");
+    info!(task=%task, param=%param);
+
+    unsafe { MaaPostTask(handle.0, to_cstring(&task), to_cstring(&param)) }
 }
 
 #[allow(clippy::unwrap_used)]

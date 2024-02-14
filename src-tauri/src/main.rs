@@ -1,20 +1,21 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use error::MaaResult;
 use maa::MaaInstanceAPI;
-use model::DeviceInfo;
+use tauri::{async_runtime::Mutex, Manager};
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
-use tauri::State;
 
-use crate::error::MaaError;
-
+mod callback;
+mod commands;
+mod config;
 mod error;
 mod maa;
 mod model;
+mod task;
 
 #[derive(Clone)]
+#[repr(transparent)]
 pub struct InstHandle(*mut MaaInstanceAPI);
 
 // Safety: InstHandle is Send and Sync because MaaInstanceAPI is Send and Sync
@@ -22,26 +23,39 @@ unsafe impl Send for InstHandle {}
 // Safety: InstHandle is Send and Sync because MaaInstanceAPI is Send and Sync
 unsafe impl Sync for InstHandle {}
 
+pub type ConfigHolderState = Mutex<config::ConfigHolder>;
+
 fn main() {
     let _guard = init_tracing();
 
     tracing::info!("Starting Maa");
 
-    let handle = maa::get_maa_handle();
-    let inst = InstHandle(handle);
-
-    let inst_clone = inst.clone();
-
-    tauri::async_runtime::spawn(async move {
-        maa::init_resources(&inst_clone);
-    });
-
     #[allow(clippy::expect_used)]
     #[allow(clippy::str_to_string)]
     tauri::Builder::default()
+        .setup(|app| {
+            let path =
+                std::env::current_exe().expect("error while getting current executable path");
+            let config_file = path.with_file_name("maa.toml");
+            let config =
+                config::ConfigHolder::new(config_file).expect("error while reading config file");
+            app.manage(Mutex::new(config));
+
+            let handle = maa::get_maa_handle(app.app_handle());
+            let inst = InstHandle(handle);
+
+            app.manage(inst);
+
+            Ok(())
+        })
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .manage(inst)
-        .invoke_handler(tauri::generate_handler![init_devices,connect_to_device])
+        .invoke_handler(tauri::generate_handler![
+            commands::device::init_devices,
+            commands::device::connect_to_device,
+            commands::config::change_client_type,
+            commands::task::start_up,
+            commands::maa::init_resources
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -52,26 +66,10 @@ fn init_tracing() -> WorkerGuard {
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
     tracing_subscriber::fmt()
-        .with_ansi(false)
+        .with_ansi(true)
         .with_max_level(Level::TRACE)
         .with_writer(non_blocking)
         .init();
 
     guard
-}
-
-#[tauri::command]
-fn init_devices() -> Vec<DeviceInfo> {
-    maa::init()
-}
-
-#[tauri::command]
-#[allow(clippy::needless_pass_by_value)]
-fn connect_to_device(inst: State<'_, InstHandle>, device: DeviceInfo) -> MaaResult<()> {
-    let ret = maa::connect_to_device(&inst, &device);
-    if ret == 1 {
-        Ok(())
-    } else {
-        Err(MaaError::DeviceConnectionError)
-    }
 }

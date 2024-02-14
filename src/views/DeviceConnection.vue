@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from "vue";
-import { deviceViewModelInjectKey } from "@/InjectKeys";
+import { computed, onMounted, ref } from "vue";
 import DeviceItem from "@/components/DeviceItem.vue";
-import { NFlex, NList, NListItem, NSpin } from "naive-ui";
-
-const deviceViewModel = inject(deviceViewModelInjectKey)!;
+import { NFlex, NList, NListItem, NSpin, NDivider } from "naive-ui";
+import { useDeviceStateStore } from "@/stores/DeviceStateStore";
 
 const loadingDevices = ref(true);
 
+const deviceStateStore = useDeviceStateStore();
+
 const connectedDeviceTitleClass = computed(() => {
     return {
-        title_secondary: deviceViewModel.connectedDevice == null,
-        title_primary: deviceViewModel.connectedDevice != null,
+        title_secondary: deviceStateStore.isDeviceConnected,
+        title_primary: !deviceStateStore.isDeviceConnected,
     };
 });
 
 onMounted(() => {
-    deviceViewModel?.loadDevices().finally(() => {
+    deviceStateStore.loadDevices().finally(() => {
         loadingDevices.value = false;
     });
 });
@@ -28,10 +28,10 @@ onMounted(() => {
             <p :class="connectedDeviceTitleClass">Connected Device</p>
         </n-flex>
 
-        <p v-if="deviceViewModel.connectedDevice == null" class="text_small">
+        <p v-if="!deviceStateStore.isDeviceConnected" class="text_small">
             No device connected
         </p>
-        <device-item v-else :device="deviceViewModel.connectedDevice" />
+        <device-item v-else :device="deviceStateStore.connectedDevice!" />
 
         <n-divider />
 
@@ -45,7 +45,7 @@ onMounted(() => {
         </n-flex>
         <p
             class="title_secondary"
-            v-else-if="deviceViewModel.devices.length == 0"
+            v-else-if="deviceStateStore.devices.length == 0"
         >
             No devices found
         </p>
@@ -54,7 +54,7 @@ onMounted(() => {
             <n-list class="rounded-lg bg-transparent">
                 <n-list-item
                     class="rounded-md hover:bg-gray-200 duration-300"
-                    v-for="device in deviceViewModel.devices"
+                    v-for="device in deviceStateStore.devices"
                     :key="device.name"
                 >
                     <device-item :device="device" />
