@@ -44,19 +44,36 @@ pub fn get_version() -> MaaResult<String> {
     Ok(version.to_owned())
 }
 
-pub fn init() -> Vec<DeviceInfo> {
+pub fn init_toolkit() -> MaaResult<()> {
     let span = trace_span!("Initialize Maa");
     let _guard = span.enter();
 
-    unsafe {
-        MaaToolkitInit();
+    let init_ret = unsafe {
+        MaaToolkitInit()
+    };
+
+    if init_ret != 1 {
+        error!("MaaToolkitInit returned {}", init_ret);
+        return Err(MaaError::MaaToolkitInitError);
+    }
+
+    Ok(())
+}
+
+pub fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
+    let post_find_device_ret = unsafe {
         MaaToolkitPostFindDevice()
     };
+
+    if post_find_device_ret != 1 {
+        error!("MaaToolkitPostFindDevice returned {}", post_find_device_ret);
+        return Err(MaaError::FindDeviceError);
+    }
 
     let device_count = unsafe { MaaToolkitWaitForFindDeviceToComplete() };
     info!("Found {} devices", device_count);
 
-    (0..device_count)
+    let ret = (0..device_count)
         .map(|index| {
             trace!("Getting device info for index {}", index);
 
@@ -82,7 +99,9 @@ pub fn init() -> Vec<DeviceInfo> {
                 adb_path,
             }
         })
-        .collect()
+        .collect();
+
+    Ok(ret)
 }
 
 pub fn get_maa_handle(app: AppHandle) -> MaaInstanceHandle {

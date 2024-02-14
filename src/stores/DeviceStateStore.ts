@@ -16,7 +16,7 @@ export const useDeviceStateStore = defineStore('device-state',{
     },
     actions: {
         async loadDevices() {
-            const devices = await CommandInvoker.initDevices()
+            const devices = await CommandInvoker.findDevices()
             this.devices = devices;
         },
         async connectTo(device:DeviceInfo) {

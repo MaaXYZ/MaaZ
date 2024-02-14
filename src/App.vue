@@ -7,17 +7,13 @@ import { listen } from "@tauri-apps/api/event";
 import CommandInvoker from "./CommandInvoker";
 import { useMaaStateStore } from "./stores/MaaStateStore";
 
-const theme: GlobalThemeOverrides = {
-    common: {
-        primaryColor: "#7F5610",
-    },
-};
+const theme: GlobalThemeOverrides = {};
 
 const maaStateStore = useMaaStateStore();
 
 onMounted(() => {
-    CommandInvoker.initResources().then(() => {
-        console.log("Resources initialized");
+    CommandInvoker.initMaa().then(() => {
+        console.log("Maa initialized");
         maaStateStore.noteResourceInited();
     });
 
@@ -28,7 +24,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <n-config-provider :themeOverrides="theme">
+    <n-config-provider>
         <div class="select-none">
             <n-flex class="h-screen">
                 <n-split

@@ -14,6 +14,8 @@ pub enum MaaError {
     UnknowTaskError(String),
     ResourceInitError,
     ResourceBindError,
+    FindDeviceError,
+    MaaToolkitInitError
 }
 
 impl From<std::str::Utf8Error> for MaaError {

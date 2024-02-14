@@ -3,11 +3,12 @@ import DeviceInfo from "./interface/DeviceInfo";
 
 export default class CommandInvoker {
 
-    /**
-     * initDevices
-     */
-    public static async initDevices():Promise<DeviceInfo[]> {
-        return invoke("init_devices");
+    public static async initMaa(): Promise<void> {
+        return invoke("init_maa");
+    }
+
+    public static async findDevices():Promise<DeviceInfo[]> {
+        return invoke("find_devices");
     }
 
     public static async connectTo(device:DeviceInfo):Promise<void> {
@@ -16,9 +17,5 @@ export default class CommandInvoker {
 
     public static async startUpTask():Promise<void> {
         return invoke("start_up");
-    }
-
-    public static async initResources(): Promise<void> {
-        return invoke("init_resources");
     }
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import DeviceItem from "@/components/DeviceItem.vue";
-import { NFlex, NList, NListItem, NSpin, NDivider } from "naive-ui";
+import { NFlex, NList, NListItem, NSpin, NDivider, NButton } from "naive-ui";
 import { useDeviceStateStore } from "@/stores/DeviceStateStore";
 
 const loadingDevices = ref(true);
@@ -16,10 +16,15 @@ const connectedDeviceTitleClass = computed(() => {
 });
 
 onMounted(() => {
+    loadDevices();
+});
+
+function loadDevices() {
+    loadingDevices.value = true;
     deviceStateStore.loadDevices().finally(() => {
         loadingDevices.value = false;
     });
-});
+}
 </script>
 
 <template>
@@ -28,12 +33,11 @@ onMounted(() => {
             <p :class="connectedDeviceTitleClass">Connected Device</p>
         </n-flex>
 
-        <p v-if="!deviceStateStore.isDeviceConnected" class="text_small">
-            No device connected
-        </p>
-        <device-item v-else :device="deviceStateStore.connectedDevice!" />
+        <n-flex vertical v-if="!deviceStateStore.isDeviceConnected">
+            <p class="text_small">No device connected</p>
+        </n-flex>
 
-        <n-divider />
+        <device-item v-else :device="deviceStateStore.connectedDevice!" />
 
         <n-flex
             class="title_secondary"
@@ -43,12 +47,10 @@ onMounted(() => {
         >
             <n-spin size="small"></n-spin>Searching for devices...
         </n-flex>
-        <p
-            class="title_secondary"
-            v-else-if="deviceStateStore.devices.length == 0"
-        >
-            No devices found
-        </p>
+        <n-flex vertical v-else-if="deviceStateStore.devices.length == 0">
+            <p class="title_secondary">No devices found</p>
+            <n-button @click="loadDevices" strong type="primary"> Rescan Devices </n-button>
+        </n-flex>
         <n-flex vertical v-else>
             <p>Available Devices</p>
             <n-list class="rounded-lg bg-transparent">

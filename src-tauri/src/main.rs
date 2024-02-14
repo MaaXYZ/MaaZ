@@ -50,11 +50,11 @@ fn main() {
         })
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
-            commands::device::init_devices,
+            commands::device::find_devices,
             commands::device::connect_to_device,
             commands::config::change_client_type,
             commands::task::start_up,
-            commands::maa::init_resources
+            commands::maa::init_maa
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -8,8 +8,8 @@ use crate::{
 };
 
 #[tauri::command]
-pub fn init_devices() -> Vec<DeviceInfo> {
-    maa::init()
+pub fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
+    maa::find_devices()
 }
 
 #[tauri::command]
