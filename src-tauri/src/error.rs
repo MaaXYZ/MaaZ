@@ -9,14 +9,13 @@ pub enum MaaError {
     MaaHandleInitError,
     DeviceConnectionError,
     IOError(String),
-    JsonDeError(String),
+    TOMLDeError(String),
+    TOMLSerError(String),
     UnknowTaskError(String),
     ResourceInitError,
     ResourceBindError,
     FindDeviceError,
-    MaaToolkitInitError,
-    PluginNotExist(String),
-    PluginNoResource,
+    MaaToolkitInitError
 }
 
 impl From<std::str::Utf8Error> for MaaError {
@@ -31,8 +30,14 @@ impl From<std::io::Error> for MaaError {
     }
 }
 
-impl From<serde_json::error::Error> for MaaError {
-    fn from(e: serde_json::error::Error) -> Self {
-        MaaError::JsonDeError(e.to_string())
+impl From<toml::de::Error> for MaaError {
+    fn from(e: toml::de::Error) -> Self {
+        MaaError::TOMLDeError(e.to_string())
+    }
+}
+
+impl From<toml::ser::Error> for MaaError {
+    fn from(e: toml::ser::Error) -> Self {
+        MaaError::TOMLSerError(e.to_string())
     }
 }

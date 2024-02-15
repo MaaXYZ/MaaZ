@@ -18,6 +18,7 @@ use crate::{
     callback::CallbackHandler,
     error::{MaaError, MaaResult},
     model::DeviceInfo,
+    task::{TaskParam, TaskType},
     InstHandle,
 };
 #[allow(clippy::wildcard_imports)]
@@ -47,7 +48,9 @@ pub fn init_toolkit() -> MaaResult<()> {
     let span = trace_span!("Initialize Maa");
     let _guard = span.enter();
 
-    let init_ret = unsafe { MaaToolkitInit() };
+    let init_ret = unsafe {
+        MaaToolkitInit()
+    };
 
     if init_ret != 1 {
         error!("MaaToolkitInit returned {}", init_ret);
@@ -58,7 +61,9 @@ pub fn init_toolkit() -> MaaResult<()> {
 }
 
 pub fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
-    let post_find_device_ret = unsafe { MaaToolkitPostFindDevice() };
+    let post_find_device_ret = unsafe {
+        MaaToolkitPostFindDevice()
+    };
 
     if post_find_device_ret != 1 {
         error!("MaaToolkitPostFindDevice returned {}", post_find_device_ret);
@@ -110,31 +115,20 @@ pub fn get_maa_handle(app: AppHandle) -> MaaInstanceHandle {
     unsafe { MaaCreate(Some(callback_fn), callback_arg) }
 }
 
-pub fn init_resources(maa_handle: &InstHandle, resources: &[String]) -> MaaResult<()> {
+pub fn init_resources(maa_handle: &InstHandle) -> MaaResult<()> {
     let span = trace_span!("Initialize Maa resources");
     let _guard = span.enter();
     let resource_handle = unsafe { MaaResourceCreate(None, null_mut()) };
-    let ret = resources
-        .iter()
-        .map(|resource| {
-            let resource_dir = format!("resources/{resource}");
-            to_cstring(&resource_dir)
-        })
-        .map(|resource_dir| unsafe { MaaResourcePostPath(resource_handle, resource_dir) })
-        .map(|resource_id| unsafe { MaaResourceWait(resource_handle, resource_id) })
-        .map(|resource_ret| {
-            if resource_ret != MaaStatusEnum_MaaStatus_Success {
-                error!("Maa resource wait returned {}", resource_ret);
-                return Err(MaaError::ResourceInitError);
-            }
-            Ok(())
-        })
-        .all(|x| x.is_ok());
+    let resource_dir = to_cstring("resources");
+    let resource_id = unsafe { MaaResourcePostPath(resource_handle, resource_dir) };
+    let resource_ret = unsafe { MaaResourceWait(resource_handle, resource_id) };
 
-    if !ret {
+    if resource_ret != MaaStatusEnum_MaaStatus_Success {
+        error!("Maa resource wait returned {}", resource_ret);
         return Err(MaaError::ResourceInitError);
     }
 
+    info!("Maa resource wait returned {}", resource_ret);
     trace!("Binding Maa resources");
     let bind_ret = unsafe { MaaBindResource(maa_handle.0, resource_handle) };
     trace!("Maa resources initialized");
@@ -203,19 +197,19 @@ pub fn connect_to_device(handle: &InstHandle, device_info: &DeviceInfo) -> u8 {
     ret
 }
 
-// pub fn post_task<T>(handle: &InstHandle, task_type: &TaskType, task_param: &T) -> i64
-// where
-//     T: TaskParam,
-// {
-//     let task = task_type.get_string();
+pub fn post_task<T>(handle: &InstHandle, task_type: &TaskType, task_param: &T) -> i64
+where
+    T: TaskParam,
+{
+    let task = task_type.get_string();
 
-//     let param = task_param.get_param();
-//     let param = param.to_string();
-//     trace!("Posting task");
-//     info!(task=%task, param=%param);
+    let param = task_param.get_param();
+    let param = param.to_string();
+    trace!("Posting task");
+    info!(task=%task, param=%param);
 
-//     unsafe { MaaPostTask(handle.0, to_cstring(&task), to_cstring(&param)) }
-// }
+    unsafe { MaaPostTask(handle.0, to_cstring(&task), to_cstring(&param)) }
+}
 
 #[allow(clippy::unwrap_used)]
 #[inline]

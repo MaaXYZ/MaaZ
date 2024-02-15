@@ -1,15 +1,10 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::collections::HashMap;
-
 use maa::MaaInstanceAPI;
-use plugin::PluginInterface;
 use tauri::{async_runtime::Mutex, Manager};
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
-
-use crate::plugin::get_plugins;
 
 mod callback;
 mod commands;
@@ -17,7 +12,7 @@ mod config;
 mod error;
 mod maa;
 mod model;
-mod plugin;
+mod task;
 
 #[derive(Clone)]
 #[repr(transparent)]
@@ -29,7 +24,6 @@ unsafe impl Send for InstHandle {}
 unsafe impl Sync for InstHandle {}
 
 pub type ConfigHolderState = Mutex<config::ConfigHolder>;
-pub type PluginsState = HashMap<String, PluginInterface>;
 
 fn main() {
     let _guard = init_tracing();
@@ -52,18 +46,15 @@ fn main() {
 
             app.manage(inst);
 
-            let plugins = get_plugins().expect("error while getting plugins");
-            app.manage(plugins);
-
             Ok(())
         })
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             commands::device::find_devices,
             commands::device::connect_to_device,
-            commands::init_maa,
-            commands::plugin::get_plugins,
-            commands::plugin::load_plugin
+            commands::config::change_client_type,
+            commands::task::start_up,
+            commands::maa::init_maa
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -4,11 +4,5 @@
 #![allow(clippy::used_underscore_binding)]
 pub mod config;
 pub mod device;
-pub mod plugin;
-
-use crate::{error::MaaResult, maa};
-
-#[tauri::command]
-pub fn init_maa() -> MaaResult<()> {
-    maa::init_toolkit()
-}
+pub mod maa;
+pub mod task;
