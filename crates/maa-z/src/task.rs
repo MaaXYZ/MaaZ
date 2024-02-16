@@ -1,8 +1,9 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::config::start_up::StartUpConfig;
 
+#[derive(Serialize, Deserialize)]
 pub enum TaskType {
     StartUp,
 }

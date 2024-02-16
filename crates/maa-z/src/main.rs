@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use maa::MaaInstanceAPI;
+use model::TaskQueue;
 use tauri::{async_runtime::Mutex, Manager};
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
@@ -26,6 +27,8 @@ unsafe impl Sync for InstHandle {}
 
 pub type ConfigHolderState = Mutex<config::ConfigHolder>;
 
+pub type TaskQueueState = Mutex<TaskQueue>;
+
 fn main() {
     let _guard = init_tracing();
 
@@ -46,6 +49,9 @@ fn main() {
             let inst = InstHandle(handle);
 
             app.manage(inst);
+
+            let task_queue = TaskQueueState::default();
+            app.manage(task_queue);
 
             Ok(())
         })

@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { taskViewModelInjectKey } from "@/InjectKeys";
-import { inject } from "vue";
+import { inject, onMounted } from "vue";
 import { NButton, NFlex } from "naive-ui";
 import { useMaaStateStore } from "@/stores/MaaStateStore";
+import { listen } from "@tauri-apps/api/event";
+import CallbackPayload from "@/interface/CallbackPayload";
 
 const maaStateStore = useMaaStateStore();
 
 const taskViewModel = inject(taskViewModelInjectKey)!;
+
+onMounted(() => {
+    listen<CallbackPayload>("callback",(event)=>{
+        
+    })
+});
+
 </script>
 
 <template>
