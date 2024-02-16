@@ -53,7 +53,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::device::find_devices,
             commands::device::connect_to_device,
-            commands::config::change_client_type,
+            commands::config::get_config,
+            commands::config::set_client_type,
             commands::task::start_up,
             commands::maa::init_maa
         ])

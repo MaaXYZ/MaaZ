@@ -1,20 +1,39 @@
 use tauri::State;
 
-use crate::{error::MaaResult, ConfigHolderState};
+use crate::{config::Config, error::MaaResult, ConfigHolderState};
 
 #[tauri::command]
-pub async fn change_client_type(
-    client_type: String,
-    config_holder: State<'_, ConfigHolderState>,
-) -> MaaResult<()> {
-    let mut config_holder = config_holder.lock().await;
-
-    config_holder.write(|config| {
-        config.start_up.client_type = match client_type.as_str() {
-            "bilibili" => crate::config::start_up::ClientType::Bilibili,
-            _ => crate::config::start_up::ClientType::Official,
-        };
-    })?;
-
-    Ok(())
+pub async fn get_config(config_holder: State<'_, ConfigHolderState>) -> MaaResult<Config> {
+    let config_holder = config_holder.lock().await;
+    Ok(config_holder.config().clone())
 }
+
+macro_rules! config_writer {
+    ($setter_name:ident, $field:ident,$field_type:tt,$writer:expr) => {
+        #[tauri::command]
+        pub async fn $setter_name(
+            value: $field_type,
+            config_holder: State<'_, ConfigHolderState>,
+        ) -> MaaResult<()> {
+            let mut config_holder = config_holder.lock().await;
+            config_holder.write(|config| $writer(config, value))?;
+            Ok(())
+        }
+    };
+
+    ($setter_name:ident,$sub_config:ident, $field:ident,$field_type:tt,$marker:ident) => {
+        #[tauri::command]
+        pub async fn $setter_name(
+            value: $field_type,
+            config_holder: State<'_, ConfigHolderState>,
+        ) -> MaaResult<()> {
+            let mut config_holder = config_holder.lock().await;
+            config_holder.write(|config| {
+                config.$sub_config.$field = value.into();
+            })?;
+            Ok(())
+        }
+    };
+}
+
+config_writer!(set_client_type, start_up, client_type, String, m);

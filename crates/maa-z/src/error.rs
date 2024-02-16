@@ -15,7 +15,7 @@ pub enum MaaError {
     ResourceInitError,
     ResourceBindError,
     FindDeviceError,
-    MaaToolkitInitError
+    MaaToolkitInitError,
 }
 
 impl From<std::str::Utf8Error> for MaaError {

@@ -16,6 +16,15 @@ impl ClientType {
     }
 }
 
+impl From<String> for ClientType {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "bilibili" => ClientType::Bilibili,
+            _ => ClientType::Official,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct StartUpConfig {
     pub client_type: ClientType,

@@ -8,7 +8,7 @@ use self::start_up::StartUpConfig;
 
 pub mod start_up;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Config {
     pub start_up: StartUpConfig,
 }

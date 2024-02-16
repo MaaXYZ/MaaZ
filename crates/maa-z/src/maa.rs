@@ -35,6 +35,31 @@ use uuid::Uuid;
 
 pub use internal::MaaInstanceAPI;
 
+pub use internal::MaaMsg_Controller_Action_Completed;
+pub use internal::MaaMsg_Controller_Action_Failed;
+pub use internal::MaaMsg_Controller_Action_Started;
+pub use internal::MaaMsg_Controller_ConnectFailed;
+pub use internal::MaaMsg_Controller_ConnectSuccess;
+pub use internal::MaaMsg_Controller_ResolutionGetFailed;
+pub use internal::MaaMsg_Controller_ResolutionGot;
+pub use internal::MaaMsg_Controller_ScreencapInitFailed;
+pub use internal::MaaMsg_Controller_ScreencapInited;
+pub use internal::MaaMsg_Controller_TouchInputInitFailed;
+pub use internal::MaaMsg_Controller_TouchInputInited;
+pub use internal::MaaMsg_Controller_UUIDGetFailed;
+pub use internal::MaaMsg_Controller_UUIDGot;
+pub use internal::MaaMsg_Invalid;
+pub use internal::MaaMsg_Resource_LoadingCompleted;
+pub use internal::MaaMsg_Resource_LoadingFailed;
+pub use internal::MaaMsg_Resource_StartLoading;
+pub use internal::MaaMsg_Task_Completed;
+pub use internal::MaaMsg_Task_Failed;
+pub use internal::MaaMsg_Task_Focus_Completed;
+pub use internal::MaaMsg_Task_Focus_Hit;
+pub use internal::MaaMsg_Task_Focus_Runout;
+pub use internal::MaaMsg_Task_Started;
+pub use internal::MaaMsg_Task_Stopped;
+
 pub fn get_version() -> MaaResult<String> {
     trace!("Getting Maa version");
 
@@ -48,9 +73,7 @@ pub fn init_toolkit() -> MaaResult<()> {
     let span = trace_span!("Initialize Maa");
     let _guard = span.enter();
 
-    let init_ret = unsafe {
-        MaaToolkitInit()
-    };
+    let init_ret = unsafe { MaaToolkitInit() };
 
     if init_ret != 1 {
         error!("MaaToolkitInit returned {}", init_ret);
@@ -61,9 +84,7 @@ pub fn init_toolkit() -> MaaResult<()> {
 }
 
 pub fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
-    let post_find_device_ret = unsafe {
-        MaaToolkitPostFindDevice()
-    };
+    let post_find_device_ret = unsafe { MaaToolkitPostFindDevice() };
 
     if post_find_device_ret != 1 {
         error!("MaaToolkitPostFindDevice returned {}", post_find_device_ret);
