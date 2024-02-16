@@ -3,7 +3,33 @@ use serde_json::{json, Value};
 
 use crate::config::start_up::StartUpConfig;
 
-#[derive(Serialize, Deserialize, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug)]
+pub enum TaskRunningState {
+    Pending,
+    Running,
+    Completed,
+    Failed,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TaskStatus {
+    pub id: Option<i64>,
+    pub task_type: TaskType,
+    pub state: TaskRunningState,
+}
+
+impl From<TaskType> for TaskStatus {
+    fn from(task_type: TaskType) -> Self {
+        Self {
+            id: None,
+            task_type,
+            state: TaskRunningState::Pending,
+        }
+    }
+}
+
+
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum TaskType {
     StartUp,
 }

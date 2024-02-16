@@ -2,7 +2,7 @@ use std::{fs::read_to_string, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::MaaResult;
+use crate::MaaResult;
 
 use self::start_up::StartUpConfig;
 

@@ -1,40 +1,12 @@
 use serde::{Deserialize, Serialize};
+use tracing::{info, trace, trace_span};
 
-use crate::task::TaskType;
-
-#[derive(Serialize, Deserialize)]
-pub struct DeviceInfo {
-    pub name: String,
-    pub adb_config: String,
-    pub adb_serial: String,
-    pub controller_type: i32,
-    pub adb_path: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum TaskRunningState {
-    Pending,
-    Running,
-    Completed,
-    Failed,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct TaskStatus {
-    pub id: Option<i64>,
-    pub task_type: TaskType,
-    pub state: TaskRunningState,
-}
-
-impl From<TaskType> for TaskStatus {
-    fn from(task_type: TaskType) -> Self {
-        Self {
-            id: None,
-            task_type,
-            state: TaskRunningState::Pending,
-        }
-    }
-}
+use crate::{
+    config::Config,
+    maa,
+    task::{StartUpParam, TaskRunningState, TaskStatus, TaskType},
+    InstHandle,
+};
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct TaskQueue {
@@ -46,19 +18,7 @@ impl TaskQueue {
         self.queue.push(task.into());
     }
 
-    /// Get the first task that is pending
-    pub fn find_next(&self) -> Option<&TaskStatus> {
-        self.queue
-            .iter()
-            .find(|t| matches!(t.state, TaskRunningState::Pending))
-    }
-
-    pub fn find_running(&self) -> Option<&TaskStatus> {
-        self.queue
-            .iter()
-            .find(|t| matches!(t.state, TaskRunningState::Running))
-    }
-
+    /// Append a task to right after the running task
     pub fn append_next(&mut self, task: TaskType) {
         if let Some(index) = self
             .queue
@@ -71,10 +31,12 @@ impl TaskQueue {
         }
     }
 
+    /// Remove a task from the queue
     pub fn remove(&mut self, index: usize) {
         self.queue.remove(index);
     }
 
+    /// Mark the running task as completed
     pub fn complete_running(&mut self) {
         if let Some(index) = self
             .queue
@@ -85,13 +47,30 @@ impl TaskQueue {
         }
     }
 
-    pub fn run_next(&mut self) {
+    /// Mark the running task as completed and start the next task
+    pub fn run_next(&mut self, handle: InstHandle, config: &Config) -> bool {
+        let span = trace_span!("run_next");
+        let _guard = span.enter();
+        self.complete_running();
+        trace!("Running next task");
         if let Some(index) = self
             .queue
             .iter()
             .position(|t| matches!(t.state, TaskRunningState::Pending))
         {
             self.queue[index].state = TaskRunningState::Running;
+            let task = &self.queue[index];
+            info!("Running task {:?}", task);
+            match task.task_type {
+                TaskType::StartUp => {
+                    let start_up_config = config.start_up.clone();
+                    let start_up_param: StartUpParam = start_up_config.into();
+                    maa::post_task(handle, task.task_type, &start_up_param);
+                }
+            }
+            true
+        } else {
+            false
         }
     }
 }

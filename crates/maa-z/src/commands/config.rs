@@ -1,6 +1,6 @@
 use tauri::State;
 
-use crate::{config::Config, error::MaaResult, ConfigHolderState};
+use crate::{config::Config, ConfigHolderState, MaaResult};
 
 #[tauri::command]
 pub async fn get_config(config_holder: State<'_, ConfigHolderState>) -> MaaResult<Config> {

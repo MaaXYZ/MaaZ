@@ -15,14 +15,11 @@ mod internal {
 }
 
 use crate::{
-    callback::{CallbackTriggerPayload, CALLBACK_EVENT},
-    error::{MaaError, MaaResult},
-    model::DeviceInfo,
-    task::{TaskParam, TaskType},
-    InstHandle, TaskQueueState,
+    callback::{CallbackTriggerPayload, CALLBACK_EVENT}, task::{TaskParam, TaskType}, InstHandle, MaaError, MaaResult, TaskQueueState
 };
 #[allow(clippy::wildcard_imports)]
 use internal::*;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::{
     ffi::c_void,
@@ -92,6 +89,15 @@ pub fn init_toolkit() -> MaaResult<()> {
     }
 
     Ok(())
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DeviceInfo {
+    pub name: String,
+    pub adb_config: String,
+    pub adb_serial: String,
+    pub controller_type: i32,
+    pub adb_path: String,
 }
 
 pub fn find_devices() -> MaaResult<Vec<DeviceInfo>> {

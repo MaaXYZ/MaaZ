@@ -4,14 +4,10 @@ use serde::{Deserialize, Serialize};
 use tauri::{async_runtime, AppHandle, Manager};
 use tracing::error;
 
-use crate::{
-    error::MaaError,
-    maa,
-    task::{StartUpParam, TaskType},
-    ConfigHolderState, InstHandle, TaskQueueState,
-};
+use crate::{maa, ConfigHolderState, InstHandle, MaaError, TaskQueueState};
 
 pub const CALLBACK_EVENT: &str = "callback";
+pub const QUEUE_DONE_EVENT: &str = "queue-done";
 
 #[derive(Serialize, Deserialize)]
 pub struct CallbackTriggerPayload {
@@ -141,7 +137,7 @@ pub fn setup_callback(
 
         let payload = CallbackEventPayload::new(callback_event, &payload.data);
         #[allow(clippy::unwrap_used)]
-        app_handle.emit_all("callback", payload).unwrap();
+        app_handle.emit_all(CALLBACK_EVENT, payload).unwrap();
 
         let app_handle = app_handle.clone();
 
@@ -152,20 +148,10 @@ pub fn setup_callback(
                 async_runtime::spawn(async move {
                     let mut queue = queue.lock().await;
                     let config = config.lock().await;
-                    queue.complete_running();
-                    if let Some(ref mut task) = queue.find_next() {
-                        match task.task_type {
-                            TaskType::StartUp => {
-                                let start_up_config = config.config().start_up.clone();
-                                let start_up_param: StartUpParam = start_up_config.into();
-                                maa::post_task(handle, task.task_type, &start_up_param);
-                            }
-                        }
-
-                        queue.run_next();
-                    } else {
+                    let has_next = queue.run_next(handle, config.config());
+                    if !has_next {
                         #[allow(clippy::unwrap_used)]
-                        app_handle.emit_all("queue-done", ()).unwrap();
+                        app_handle.emit_all(QUEUE_DONE_EVENT, ()).unwrap();
                     }
                 });
             }

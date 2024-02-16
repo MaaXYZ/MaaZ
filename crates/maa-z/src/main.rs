@@ -4,7 +4,8 @@
 use std::sync::Arc;
 
 use maa::MaaInstanceAPI;
-use model::TaskQueue;
+use queue::TaskQueue;
+use serde::Serialize;
 use tauri::{async_runtime::Mutex, Manager};
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
@@ -15,9 +16,8 @@ use crate::callback::setup_callback;
 mod callback;
 mod commands;
 mod config;
-mod error;
 mod maa;
-mod model;
+mod queue;
 mod task;
 
 #[derive(Clone, Copy)]
@@ -74,7 +74,7 @@ fn main() {
             commands::config::get_config,
             commands::config::set_client_type,
             commands::task::start_up,
-            commands::maa::init_maa
+            commands::init_maa,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -96,4 +96,46 @@ fn init_tracing() -> WorkerGuard {
         .init();
 
     guard
+}
+
+pub type MaaResult<T> = Result<T, MaaError>;
+
+#[derive(Serialize, Debug)]
+pub enum MaaError {
+    Utf8Error(String),
+    MaaHandleInitError,
+    DeviceConnectionError,
+    IOError(String),
+    TOMLDeError(String),
+    TOMLSerError(String),
+    UnknowTaskError(String),
+    ResourceInitError,
+    ResourceBindError,
+    FindDeviceError,
+    MaaToolkitInitError,
+    InvalidCallbackEvent(String),
+}
+
+impl From<std::str::Utf8Error> for MaaError {
+    fn from(e: std::str::Utf8Error) -> Self {
+        MaaError::Utf8Error(e.to_string())
+    }
+}
+
+impl From<std::io::Error> for MaaError {
+    fn from(e: std::io::Error) -> Self {
+        MaaError::IOError(e.to_string())
+    }
+}
+
+impl From<toml::de::Error> for MaaError {
+    fn from(e: toml::de::Error) -> Self {
+        MaaError::TOMLDeError(e.to_string())
+    }
+}
+
+impl From<toml::ser::Error> for MaaError {
+    fn from(e: toml::ser::Error) -> Self {
+        MaaError::TOMLSerError(e.to_string())
+    }
 }

@@ -1,10 +1,7 @@
 use tauri::State;
 
 use crate::{
-    error::{MaaError, MaaResult},
-    maa,
-    model::DeviceInfo,
-    InstHandle,
+    maa::{self, DeviceInfo}, InstHandle, MaaError, MaaResult
 };
 
 #[tauri::command]
