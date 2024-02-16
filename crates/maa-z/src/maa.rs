@@ -154,7 +154,7 @@ pub fn get_maa_handle(app: AppHandle) -> MaaInstanceHandle {
     unsafe { MaaCreate(Some(callback_fn), callback_arg) }
 }
 
-pub fn init_resources(maa_handle: &InstHandle) -> MaaResult<()> {
+pub fn init_resources(maa_handle: InstHandle) -> MaaResult<()> {
     let span = trace_span!("Initialize Maa resources");
     let _guard = span.enter();
     let resource_handle = unsafe { MaaResourceCreate(None, null_mut()) };
