@@ -1,12 +1,16 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::sync::Arc;
+
 use maa::MaaInstanceAPI;
 use model::TaskQueue;
 use tauri::{async_runtime::Mutex, Manager};
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::fmt::time::OffsetTime;
+
+use crate::callback::setup_callback;
 
 mod callback;
 mod commands;
@@ -16,7 +20,7 @@ mod maa;
 mod model;
 mod task;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct InstHandle(*mut MaaInstanceAPI);
 
@@ -25,9 +29,9 @@ unsafe impl Send for InstHandle {}
 // Safety: InstHandle is Send and Sync because MaaInstanceAPI is Send and Sync
 unsafe impl Sync for InstHandle {}
 
-pub type ConfigHolderState = Mutex<config::ConfigHolder>;
+pub type ConfigHolderState = Arc<Mutex<config::ConfigHolder>>;
 
-pub type TaskQueueState = Mutex<TaskQueue>;
+pub type TaskQueueState = Arc<Mutex<TaskQueue>>;
 
 fn main() {
     let _guard = init_tracing();
@@ -43,15 +47,23 @@ fn main() {
             let config_file = path.with_file_name("maa.toml");
             let config =
                 config::ConfigHolder::new(config_file).expect("error while reading config file");
-            app.manage(Mutex::new(config));
+            let config = Arc::new(Mutex::new(config));
+            app.manage(Arc::clone(&config));
+
+            let task_queue = TaskQueueState::default();
+            app.manage(Arc::clone(&task_queue));
 
             let handle = maa::get_maa_handle(app.app_handle());
             let inst = InstHandle(handle);
 
             app.manage(inst);
 
-            let task_queue = TaskQueueState::default();
-            app.manage(task_queue);
+            setup_callback(
+                &app.app_handle(),
+                Arc::clone(&task_queue),
+                Arc::clone(&config),
+                inst,
+            );
 
             Ok(())
         })

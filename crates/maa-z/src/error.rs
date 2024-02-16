@@ -16,7 +16,7 @@ pub enum MaaError {
     ResourceBindError,
     FindDeviceError,
     MaaToolkitInitError,
-    InvalidCallbackEvent(String)
+    InvalidCallbackEvent(String),
 }
 
 impl From<std::str::Utf8Error> for MaaError {

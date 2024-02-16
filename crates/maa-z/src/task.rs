@@ -3,14 +3,14 @@ use serde_json::{json, Value};
 
 use crate::config::start_up::StartUpConfig;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum TaskType {
     StartUp,
 }
 
 impl TaskType {
-    pub fn get_string(&self) -> String {
-        match *self {
+    pub fn get_string(self) -> String {
+        match self {
             TaskType::StartUp => "start_up".to_owned(),
         }
     }

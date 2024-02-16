@@ -15,11 +15,11 @@ mod internal {
 }
 
 use crate::{
-    callback::CallbackHandler,
+    callback::{CallbackTriggerPayload, CALLBACK_EVENT},
     error::{MaaError, MaaResult},
     model::DeviceInfo,
     task::{TaskParam, TaskType},
-    InstHandle,
+    InstHandle, TaskQueueState,
 };
 #[allow(clippy::wildcard_imports)]
 use internal::*;
@@ -29,7 +29,7 @@ use std::{
     mem,
     ptr::{null, null_mut},
 };
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tracing::{error, event, info, trace, trace_span, Level};
 use uuid::Uuid;
 
@@ -139,9 +139,8 @@ pub fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
 pub fn get_maa_handle(app: AppHandle) -> MaaInstanceHandle {
     let span = trace_span!("Creating Maa handle");
     let _guard = span.enter();
-    let handler = CallbackHandler::new(app);
 
-    let callback_arg = Box::into_raw(Box::new(handler)).cast::<c_void>();
+    let callback_arg = Box::into_raw(Box::new(app)).cast::<c_void>();
 
     trace!("Creating Maa handle");
     unsafe { MaaCreate(Some(callback_fn), callback_arg) }
@@ -179,15 +178,25 @@ unsafe extern "C" fn callback_fn(
     handler: MaaTransparentArg,
 ) {
     trace!("Callback received");
-    let handler = handler.cast::<CallbackHandler>();
+    let handler = handler.cast::<AppHandle>();
 
     let msg = maa_string_view_to_string(msg);
     let details = maa_string_view_to_string(details_json);
 
     event!(Level::TRACE, msg=%msg, details=%details);
 
+    let trigger_payload = CallbackTriggerPayload::new(msg, details);
+    let data = serde_json::to_string(&trigger_payload)
+        .inspect_err(|e| {
+            error!("Failed to serialize callback payload: {}", e);
+        })
+        .unwrap_or_default();
+
     #[allow(clippy::unwrap_used)]
-    handler.as_ref().unwrap().handle_callback(msg, details);
+    handler
+        .as_ref()
+        .unwrap()
+        .trigger_global(CALLBACK_EVENT, Some(data));
 }
 
 pub fn connect_to_device(handle: &InstHandle, device_info: &DeviceInfo) -> u8 {
@@ -229,7 +238,7 @@ pub fn connect_to_device(handle: &InstHandle, device_info: &DeviceInfo) -> u8 {
     ret
 }
 
-pub fn post_task<T>(handle: &InstHandle, task_type: &TaskType, task_param: &T) -> i64
+pub fn post_task<T>(handle: InstHandle, task_type: TaskType, task_param: &T) -> i64
 where
     T: TaskParam,
 {

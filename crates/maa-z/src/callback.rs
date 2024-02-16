@@ -1,16 +1,31 @@
-use std::ffi::CString;
+use std::{ffi::CString, sync::Arc};
 
-use serde::Serialize;
-use tauri::{AppHandle, Manager};
+use serde::{Deserialize, Serialize};
+use tauri::{async_runtime, AppHandle, Manager};
 use tracing::error;
 
-use crate::{error::MaaError, maa};
+use crate::{
+    error::MaaError,
+    maa,
+    task::{StartUpParam, TaskType},
+    ConfigHolderState, InstHandle, TaskQueueState,
+};
 
-pub struct CallbackHandler {
-    app: AppHandle,
+pub const CALLBACK_EVENT: &str = "callback";
+
+#[derive(Serialize, Deserialize)]
+pub struct CallbackTriggerPayload {
+    pub msg: String,
+    pub data: String,
 }
 
-#[derive(Serialize, Clone)]
+impl CallbackTriggerPayload {
+    pub fn new(msg: String, data: String) -> Self {
+        Self { msg, data }
+    }
+}
+
+#[derive(Serialize, Clone, Copy)]
 enum CallbackEvent {
     Invalid,
     ResourceStartLoading,
@@ -42,7 +57,8 @@ impl TryFrom<String> for CallbackEvent {
     type Error = MaaError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let str_value = CString::new(value.clone()).map_err(|e| MaaError::Utf8Error(e.to_string()))?;
+        let str_value =
+            CString::new(value.clone()).map_err(|e| MaaError::Utf8Error(e.to_string()))?;
         let bytes = str_value.as_bytes_with_nul();
         match bytes {
             // generate all arms
@@ -53,11 +69,19 @@ impl TryFrom<String> for CallbackEvent {
             maa::MaaMsg_Controller_UUIDGot => Ok(CallbackEvent::ControllerUUIDGot),
             maa::MaaMsg_Controller_UUIDGetFailed => Ok(CallbackEvent::ControllerUUIDGetFailed),
             maa::MaaMsg_Controller_ResolutionGot => Ok(CallbackEvent::ControllerResolutionGot),
-            maa::MaaMsg_Controller_ResolutionGetFailed => Ok(CallbackEvent::ControllerResolutionGetFailed),
+            maa::MaaMsg_Controller_ResolutionGetFailed => {
+                Ok(CallbackEvent::ControllerResolutionGetFailed)
+            }
             maa::MaaMsg_Controller_ScreencapInited => Ok(CallbackEvent::ControllerScreencapInited),
-            maa::MaaMsg_Controller_ScreencapInitFailed => Ok(CallbackEvent::ControllerScreencapInitFailed),
-            maa::MaaMsg_Controller_TouchInputInited => Ok(CallbackEvent::ControllerTouchInputInited),
-            maa::MaaMsg_Controller_TouchInputInitFailed => Ok(CallbackEvent::ControllerTouchInputInitFailed),
+            maa::MaaMsg_Controller_ScreencapInitFailed => {
+                Ok(CallbackEvent::ControllerScreencapInitFailed)
+            }
+            maa::MaaMsg_Controller_TouchInputInited => {
+                Ok(CallbackEvent::ControllerTouchInputInited)
+            }
+            maa::MaaMsg_Controller_TouchInputInitFailed => {
+                Ok(CallbackEvent::ControllerTouchInputInitFailed)
+            }
             maa::MaaMsg_Controller_Action_Started => Ok(CallbackEvent::ControllerActionStarted),
             maa::MaaMsg_Controller_Action_Completed => Ok(CallbackEvent::ControllerActionCompleted),
             maa::MaaMsg_Controller_Action_Failed => Ok(CallbackEvent::ControllerActionFailed),
@@ -74,34 +98,80 @@ impl TryFrom<String> for CallbackEvent {
             _ => Err(MaaError::InvalidCallbackEvent(value)),
         }
     }
-
 }
 
 #[derive(Serialize, Clone)]
-struct CallbackPayload {
-    event: CallbackEvent,
-    details: String,
+struct CallbackEventPayload {
+    pub event: CallbackEvent,
+    pub data: String,
 }
 
-impl CallbackHandler {
-    pub fn new(app: AppHandle) -> CallbackHandler {
-        CallbackHandler { app }
-    }
-
-    pub fn handle_callback(&self, msg: String, details: String) {
-
-        match CallbackEvent::try_from(msg) {
-            Ok(event) => {
-                let payload = CallbackPayload {
-                    event,
-                    details,
-                };
-                #[allow(clippy::unwrap_used)]
-                self.app.emit_all("callback", payload).unwrap();
-            }
-            Err(e) => {
-                error!("Error while converting callback event: {:?}", e);
-            }
+impl CallbackEventPayload {
+    pub fn new(event: CallbackEvent, data: &str) -> Self {
+        Self {
+            event,
+            data: data.to_owned(),
         }
     }
+}
+
+pub fn setup_callback(
+    app: &AppHandle,
+    queue: TaskQueueState,
+    config: ConfigHolderState,
+    handle: InstHandle,
+) {
+    let app_handle = app.clone();
+
+    app.listen_global(CALLBACK_EVENT, move |event| {
+        let payload_string = event.payload().unwrap_or_default();
+        let Ok(payload) = serde_json::from_str::<CallbackTriggerPayload>(payload_string)
+            .inspect_err(|e| {
+                error!("Error while deserializing callback payload: {}", e);
+            })
+        else {
+            return;
+        };
+
+        let Ok(callback_event) = CallbackEvent::try_from(payload.msg).inspect_err(|e| {
+            error!("Error while converting callback event: {:?}", e);
+        }) else {
+            return;
+        };
+
+        let payload = CallbackEventPayload::new(callback_event, &payload.data);
+        #[allow(clippy::unwrap_used)]
+        app_handle.emit_all("callback", payload).unwrap();
+
+        let app_handle = app_handle.clone();
+
+        match callback_event {
+            CallbackEvent::TaskCompleted => {
+                let queue = Arc::clone(&queue);
+                let config = Arc::clone(&config);
+                async_runtime::spawn(async move {
+                    let mut queue = queue.lock().await;
+                    let config = config.lock().await;
+                    queue.complete_running();
+                    if let Some(ref mut task) = queue.find_next() {
+                        match task.task_type {
+                            TaskType::StartUp => {
+                                let start_up_config = config.config().start_up.clone();
+                                let start_up_param: StartUpParam = start_up_config.into();
+                                maa::post_task(handle, task.task_type, &start_up_param);
+                            }
+                        }
+
+                        queue.run_next();
+                    } else {
+                        #[allow(clippy::unwrap_used)]
+                        app_handle.emit_all("queue-done", ()).unwrap();
+                    }
+                });
+            }
+            _ => {
+                unimplemented!()
+            }
+        }
+    });
 }

@@ -1,10 +1,6 @@
 use tauri::State;
 
-use crate::{
-    error::MaaResult,
-    task::TaskType,
-    TaskQueueState
-};
+use crate::{error::MaaResult, task::TaskType, TaskQueueState};
 
 macro_rules! task_command {
     ($name:ident,$upper_name:ident,$param:tt) => {

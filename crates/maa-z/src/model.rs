@@ -23,7 +23,7 @@ pub enum TaskRunningState {
 pub struct TaskStatus {
     pub id: Option<i64>,
     pub task_type: TaskType,
-    pub state: TaskRunningState
+    pub state: TaskRunningState,
 }
 
 impl From<TaskType> for TaskStatus {
@@ -48,11 +48,23 @@ impl TaskQueue {
 
     /// Get the first task that is pending
     pub fn find_next(&self) -> Option<&TaskStatus> {
-        self.queue.iter().find(|t| matches!(t.state, TaskRunningState::Pending))
+        self.queue
+            .iter()
+            .find(|t| matches!(t.state, TaskRunningState::Pending))
+    }
+
+    pub fn find_running(&self) -> Option<&TaskStatus> {
+        self.queue
+            .iter()
+            .find(|t| matches!(t.state, TaskRunningState::Running))
     }
 
     pub fn append_next(&mut self, task: TaskType) {
-        if let Some(index) = self.queue.iter().position(|t| matches!(t.state, TaskRunningState::Pending)) {
+        if let Some(index) = self
+            .queue
+            .iter()
+            .position(|t| matches!(t.state, TaskRunningState::Pending))
+        {
             self.queue.insert(index, task.into());
         } else {
             self.queue.push(task.into());
@@ -61,5 +73,25 @@ impl TaskQueue {
 
     pub fn remove(&mut self, index: usize) {
         self.queue.remove(index);
+    }
+
+    pub fn complete_running(&mut self) {
+        if let Some(index) = self
+            .queue
+            .iter()
+            .position(|t| matches!(t.state, TaskRunningState::Running))
+        {
+            self.queue[index].state = TaskRunningState::Completed;
+        }
+    }
+
+    pub fn run_next(&mut self) {
+        if let Some(index) = self
+            .queue
+            .iter()
+            .position(|t| matches!(t.state, TaskRunningState::Pending))
+        {
+            self.queue[index].state = TaskRunningState::Running;
+        }
     }
 }
