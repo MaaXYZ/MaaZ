@@ -24,9 +24,10 @@ dist-ssr
 
 deps
 build
-src-tauri/config
-src-tauri/debug
-src-tauri/include
-src-tauri/lib
-src-tauri/MaaAgentBinary
+crates/maa-z/config
+crates/maa-z/debug
+crates/maa-z/include
+crates/maa-z/lib
+crates/maa-z/MaaAgentBinary
 .task
+crates/target

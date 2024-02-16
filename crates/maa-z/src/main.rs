@@ -5,6 +5,7 @@ use maa::MaaInstanceAPI;
 use tauri::{async_runtime::Mutex, Manager};
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber::fmt::time::OffsetTime;
 
 mod callback;
 mod commands;
@@ -65,10 +66,14 @@ fn init_tracing() -> WorkerGuard {
     let file_appender = tracing_appender::rolling::daily("logs", "maa.log");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
+    #[allow(clippy::expect_used)]
+    let timer = OffsetTime::local_rfc_3339().expect("error while creating timer");
+
     tracing_subscriber::fmt()
         .with_ansi(true)
         .with_max_level(Level::TRACE)
         .with_writer(non_blocking)
+        .with_timer(timer)
         .init();
 
     guard

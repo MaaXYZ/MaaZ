@@ -4,6 +4,15 @@ pub struct CallbackHandler {
     app: AppHandle,
 }
 
+enum CallbackEvent {
+    TaskSuccess,
+    TaskStart
+}
+
+struct CallbackPayload {
+
+}
+
 impl CallbackHandler {
     pub fn new(app: AppHandle) -> CallbackHandler {
         CallbackHandler { app }

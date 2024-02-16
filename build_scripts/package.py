@@ -11,12 +11,12 @@ def main():
         print("Invalid mode: " + mode)
         exit(1)
     if system == "windows":
-        binary_file = os.path.join("src-tauri", "target", mode, "maa-z.exe")
+        binary_file = os.path.join("crates", "target", mode, "maa-z.exe")
     else:
-        binary_file = os.path.join("src-tauri", "target", mode, "maa-z")
+        binary_file = os.path.join("crates", "target", mode, "maa-z")
     libsDir = os.path.join("deps", "maafw", "bin")
     agentBinary = os.path.join("deps", "maafw", "share", "MaaAgentBinary")
-    resources = os.path.join("src-tauri","resources")
+    resources = os.path.join("crates","maa-z","resources")
 
     # Create build directory
     build_dir = os.path.join("build", mode)

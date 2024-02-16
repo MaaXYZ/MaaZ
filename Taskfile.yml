@@ -17,14 +17,14 @@ tasks:
 
   build-backend-debug:
     desc: Build the backend in debug mode
-    dir: src-tauri
+    dir: crates
     cmds:
       - task: setup-deps
       - cargo build
 
   build-backend-release:
     desc: Build the backend in release mode
-    dir: src-tauri
+    dir: crates
     cmds:
       - task: setup-deps
       - cargo build --release

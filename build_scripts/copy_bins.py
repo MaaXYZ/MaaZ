@@ -12,8 +12,8 @@ def main():
 
     binsDir = os.path.join("deps", "maafw", "bin")
     agentDir = os.path.join("deps", "maafw", "share", "MaaAgentBinary")
-    agentTargteDir = os.path.join("src-tauri", "MaaAgentBinary")
-    targetDir = os.path.join("src-tauri", "target", mode)
+    agentTargteDir = os.path.join("crates","maa-z", "MaaAgentBinary")
+    targetDir = os.path.join("crates", "target", mode)
     if not os.path.exists(targetDir):
         os.makedirs(targetDir)
     for root, dirs, files in os.walk(binsDir):

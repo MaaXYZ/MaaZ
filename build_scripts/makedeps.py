@@ -69,7 +69,7 @@ def setup_deps_dir():
 
 def setup_maafw_link_libs(host_system, fw_dir):
     lib_dir = os.path.join(fw_dir, "lib") if host_system == "windows" else os.path.join(fw_dir, "bin")
-    copy_file_recursively(lib_dir, os.path.join("src-tauri", "lib"), host_system)
+    copy_file_recursively(lib_dir, os.path.join("crates","maa-z", "lib"), host_system)
 
 def setup_maafw(host_system, host_arch, dst):
     print("Setting up MAA Framework")
@@ -91,7 +91,7 @@ def setup_maafw(host_system, host_arch, dst):
 
     print("Copying MAA Framework include files")
     include_dir = os.path.join(extracted_path, "include")
-    src_include_dir = os.path.join("src-tauri", "include")
+    src_include_dir = os.path.join("crates","maa-z", "include")
     copy_file_recursively(include_dir, src_include_dir, host_system)
 
     print("Copying MAA Framework link libraries")

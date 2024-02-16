@@ -3,7 +3,7 @@
 #![allow(clippy::unwrap_used)]
 
 fn main() {
-    println!("cargo:rustc-link-search=./lib");
+    println!("cargo:rustc-link-search=./maa-z/lib");
 
     println!("cargo:rustc-link-lib=MaaFramework");
     println!("cargo:rustc-link-lib=MaaRpc");
