@@ -35,30 +35,41 @@ use uuid::Uuid;
 
 pub use internal::MaaInstanceAPI;
 
-pub use internal::MaaMsg_Controller_Action_Completed;
-pub use internal::MaaMsg_Controller_Action_Failed;
-pub use internal::MaaMsg_Controller_Action_Started;
-pub use internal::MaaMsg_Controller_ConnectFailed;
-pub use internal::MaaMsg_Controller_ConnectSuccess;
-pub use internal::MaaMsg_Controller_ResolutionGetFailed;
-pub use internal::MaaMsg_Controller_ResolutionGot;
-pub use internal::MaaMsg_Controller_ScreencapInitFailed;
-pub use internal::MaaMsg_Controller_ScreencapInited;
-pub use internal::MaaMsg_Controller_TouchInputInitFailed;
-pub use internal::MaaMsg_Controller_TouchInputInited;
-pub use internal::MaaMsg_Controller_UUIDGetFailed;
-pub use internal::MaaMsg_Controller_UUIDGot;
-pub use internal::MaaMsg_Invalid;
-pub use internal::MaaMsg_Resource_LoadingCompleted;
-pub use internal::MaaMsg_Resource_LoadingFailed;
-pub use internal::MaaMsg_Resource_StartLoading;
-pub use internal::MaaMsg_Task_Completed;
-pub use internal::MaaMsg_Task_Failed;
-pub use internal::MaaMsg_Task_Focus_Completed;
-pub use internal::MaaMsg_Task_Focus_Hit;
-pub use internal::MaaMsg_Task_Focus_Runout;
-pub use internal::MaaMsg_Task_Started;
-pub use internal::MaaMsg_Task_Stopped;
+macro_rules! export_msg {
+    ($($const_name:ident),*) => {
+        $(
+            #[allow(non_upper_case_globals)]
+            pub const $const_name: &'static [u8] = internal::$const_name;
+        )*
+    };
+}
+
+export_msg!(
+    MaaMsg_Controller_Action_Completed,
+    MaaMsg_Controller_Action_Failed,
+    MaaMsg_Controller_Action_Started,
+    MaaMsg_Controller_ConnectFailed,
+    MaaMsg_Controller_ConnectSuccess,
+    MaaMsg_Controller_ResolutionGetFailed,
+    MaaMsg_Controller_ResolutionGot,
+    MaaMsg_Controller_ScreencapInitFailed,
+    MaaMsg_Controller_ScreencapInited,
+    MaaMsg_Controller_TouchInputInitFailed,
+    MaaMsg_Controller_TouchInputInited,
+    MaaMsg_Controller_UUIDGetFailed,
+    MaaMsg_Controller_UUIDGot,
+    MaaMsg_Invalid,
+    MaaMsg_Resource_LoadingCompleted,
+    MaaMsg_Resource_LoadingFailed,
+    MaaMsg_Resource_StartLoading,
+    MaaMsg_Task_Completed,
+    MaaMsg_Task_Failed,
+    MaaMsg_Task_Focus_Completed,
+    MaaMsg_Task_Focus_Hit,
+    MaaMsg_Task_Focus_Runout,
+    MaaMsg_Task_Started,
+    MaaMsg_Task_Stopped
+);
 
 pub fn get_version() -> MaaResult<String> {
     trace!("Getting Maa version");

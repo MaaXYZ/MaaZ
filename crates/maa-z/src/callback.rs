@@ -1,5 +1,10 @@
+use std::ffi::CString;
+
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
+use tracing::error;
+
+use crate::{error::MaaError, maa};
 
 pub struct CallbackHandler {
     app: AppHandle,
@@ -19,11 +24,11 @@ enum CallbackEvent {
     ControllerScreencapInitFailed,
     ControllerTouchInputInited,
     ControllerTouchInputInitFailed,
+    ControllerActionStarted,
+    ControllerActionCompleted,
+    ControllerActionFailed,
     ConnectSuccess,
     ConnectFailed,
-    ActionStarted,
-    ActionCompleted,
-    ActionFailed,
     TaskStarted,
     TaskCompleted,
     TaskFailed,
@@ -33,10 +38,18 @@ enum CallbackEvent {
     TaskFocusCompleted,
 }
 
-impl From<String> for CallbackEvent {
-    fn from(value: String) -> Self {
-        unimplemented!()
+impl TryFrom<String> for CallbackEvent {
+    type Error = MaaError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let str_value = CString::new(value.clone()).map_err(|_| MaaError::Utf8Error(value.clone()))?;
+        let bytes = str_value.as_bytes_with_nul();
+        match bytes {
+            maa::MaaMsg_Controller_Action_Completed => Ok(Self::ControllerActionCompleted),
+            _ => Err(MaaError::InvalidCallbackEvent(value)),
+        }
     }
+
 }
 
 #[derive(Serialize, Clone)]
@@ -51,11 +64,19 @@ impl CallbackHandler {
     }
 
     pub fn handle_callback(&self, msg: String, details: String) {
-        let payload = CallbackPayload {
-            event: msg.into(),
-            details,
-        };
-        #[allow(clippy::unwrap_used)]
-        self.app.emit_all("callback", payload).unwrap();
+
+        match CallbackEvent::try_from(msg.clone()) {
+            Ok(event) => {
+                let payload = CallbackPayload {
+                    event,
+                    details,
+                };
+                #[allow(clippy::unwrap_used)]
+                self.app.emit_all("callback", payload).unwrap();
+            }
+            Err(e) => {
+                error!("Error while converting callback event: {:?}", e);
+            }
+        }
     }
 }
