@@ -28,7 +28,6 @@ impl From<TaskType> for TaskStatus {
     }
 }
 
-
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum TaskType {
     StartUp,

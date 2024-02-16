@@ -2,7 +2,7 @@ use std::{ffi::CString, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 use tauri::{async_runtime, AppHandle, Manager};
-use tracing::error;
+use tracing::{error, info, trace_span};
 
 use crate::{maa, ConfigHolderState, InstHandle, MaaError, TaskQueueState};
 
@@ -21,7 +21,7 @@ impl CallbackTriggerPayload {
     }
 }
 
-#[derive(Serialize, Clone, Copy)]
+#[derive(Serialize, Clone, Copy, Debug)]
 enum CallbackEvent {
     Invalid,
     ResourceStartLoading,
@@ -120,7 +120,11 @@ pub fn setup_callback(
     let app_handle = app.clone();
 
     app.listen_global(CALLBACK_EVENT, move |event| {
+        let span = trace_span!("callback");
+        let _guard = span.enter();
+
         let payload_string = event.payload().unwrap_or_default();
+        info!("Received callback payload: {}", payload_string);
         let Ok(payload) = serde_json::from_str::<CallbackTriggerPayload>(payload_string)
             .inspect_err(|e| {
                 error!("Error while deserializing callback payload: {}", e);
@@ -135,6 +139,7 @@ pub fn setup_callback(
             return;
         };
 
+        info!("Emitting callback event: {:?}", callback_event);
         let payload = CallbackEventPayload::new(callback_event, &payload.data);
         #[allow(clippy::unwrap_used)]
         app_handle.emit_all(CALLBACK_EVENT, payload).unwrap();
@@ -146,6 +151,7 @@ pub fn setup_callback(
                 let queue = Arc::clone(&queue);
                 let config = Arc::clone(&config);
                 async_runtime::spawn(async move {
+                    info!("Running next task");
                     let mut queue = queue.lock().await;
                     let config = config.lock().await;
                     let has_next = queue.run_next(handle, config.config());

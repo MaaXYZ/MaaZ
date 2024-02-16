@@ -70,6 +70,7 @@ impl TaskQueue {
             }
             true
         } else {
+            info!("No more tasks to run");
             false
         }
     }

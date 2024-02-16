@@ -15,7 +15,9 @@ mod internal {
 }
 
 use crate::{
-    callback::{CallbackTriggerPayload, CALLBACK_EVENT}, task::{TaskParam, TaskType}, InstHandle, MaaError, MaaResult, TaskQueueState
+    callback::{CallbackTriggerPayload, CALLBACK_EVENT},
+    task::{TaskParam, TaskType},
+    InstHandle, MaaError, MaaResult, TaskQueueState,
 };
 #[allow(clippy::wildcard_imports)]
 use internal::*;
