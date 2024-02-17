@@ -2,7 +2,8 @@
 import TaskStatus from '@/interface/TaskStatus';
 import { computed, ref } from 'vue';
 import { useTaskQueueStore } from '@/stores/TaskQueueStore';
-import { NButton, NSpin } from 'naive-ui';
+import { NButton } from 'naive-ui';
+import IndeterminedProgressBar from './IndeterminedProgressBar.vue';
 
 const taskQueueStore = useTaskQueueStore();
 
@@ -38,8 +39,9 @@ const backgroundColor = computed(() => {
 </script>
 
 <template>
-    <div @mouseenter="mouseEnter" :style="{ backgroundColor:backgroundColor }" @mouseleave="mouseLeave" class="item mx-1 inline-block">
-        <p class="text-center"><n-spin v-if="task.state==='Running'"></n-spin>{{ props.task.taskType }}</p>
+    <div @mouseenter="mouseEnter" :style="{ backgroundColor:backgroundColor }" @mouseleave="mouseLeave" class="item mx-1 flex flex-col text-center items-center">
+        <p class="text-center">{{ props.task.taskType }}</p>
+        <indetermined-progress-bar v-if="props.task.state==='Running'" class="w-11/12"></indetermined-progress-bar>
         <n-button v-if="showRemoveButton" type="error" class="w-full" @click="taskQueueStore.removeFromQueue(props.index)">Remove</n-button>
     </div>
 </template>
