@@ -6,7 +6,7 @@ use crate::{
 };
 
 #[tauri::command]
-pub fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
+pub async fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
     maa::find_devices()
 }
 

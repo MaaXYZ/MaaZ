@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import DeviceItem from "@/components/DeviceItem.vue";
-import { NFlex, NList, NListItem, NSpin, NDivider, NButton } from "naive-ui";
+import { NFlex, NList, NListItem, NSpin, NButton } from "naive-ui";
 import { useDeviceStateStore } from "@/stores/DeviceStateStore";
 
 const loadingDevices = ref(true);
@@ -53,9 +53,9 @@ function loadDevices() {
         </n-flex>
         <n-flex vertical v-else>
             <p>Available Devices</p>
-            <n-list class="rounded-lg bg-transparent">
+            <n-list class="rounded-lg bg-transparent" :hoverable="true" :clickable="true">
                 <n-list-item
-                    class="rounded-md hover:bg-gray-200 duration-300"
+                    class="rounded-md"
                     v-for="device in deviceStateStore.devices"
                     :key="device.name"
                 >

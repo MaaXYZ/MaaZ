@@ -14,6 +14,10 @@ pub struct TaskQueue {
 }
 
 impl TaskQueue {
+    pub fn current_queue(&self) -> Vec<TaskStatus> {
+        self.queue.clone()
+    }
+
     pub fn push(&mut self, task: TaskType) {
         self.queue.push(task.into());
     }
@@ -59,19 +63,45 @@ impl TaskQueue {
             .position(|t| matches!(t.state, TaskRunningState::Pending))
         {
             self.queue[index].state = TaskRunningState::Running;
-            let task = &self.queue[index];
+            let task = &mut self.queue[index];
             info!("Running task {:?}", task);
-            match task.task_type {
+            let id = match task.task_type {
                 TaskType::StartUp => {
                     let start_up_config = config.start_up.clone();
                     let start_up_param: StartUpParam = start_up_config.into();
-                    maa::post_task(handle, task.task_type, &start_up_param);
+                    maa::post_task(handle, task.task_type, &start_up_param)
                 }
-            }
+            };
+            task.id = Some(id);
             true
         } else {
             info!("No more tasks to run");
             false
         }
+    }
+
+    pub fn idle(&self) -> bool {
+        !self
+            .queue
+            .iter()
+            .any(|t| matches!(t.state, TaskRunningState::Running))
+    }
+
+    pub fn start(&mut self, handle: InstHandle, config: &Config) -> bool {
+        if !self.idle() {
+            info!("Task queue is already running");
+            return false;
+        }
+
+        let has_pending = self
+            .queue
+            .iter()
+            .any(|t| matches!(t.state, TaskRunningState::Pending));
+        if !has_pending {
+            info!("No pending tasks to run");
+            return false;
+        }
+
+        self.run_next(handle, config)
     }
 }

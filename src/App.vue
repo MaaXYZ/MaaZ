@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NFlex, NSplit, NConfigProvider, GlobalThemeOverrides } from "naive-ui";
+import { NFlex, NSplit, NConfigProvider } from "naive-ui";
 import DeviceConnection from "./views/DeviceConnection.vue";
 import TaskDispatch from "./views/TaskDispatch.vue";
 import { onMounted } from "vue";
@@ -7,7 +7,7 @@ import { listen } from "@tauri-apps/api/event";
 import CommandInvoker from "./CommandInvoker";
 import { useMaaStateStore } from "./stores/MaaStateStore";
 
-const theme: GlobalThemeOverrides = {};
+// const theme: GlobalThemeOverrides = {};
 
 const maaStateStore = useMaaStateStore();
 

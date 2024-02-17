@@ -73,7 +73,10 @@ fn main() {
             commands::device::connect_to_device,
             commands::config::get_config,
             commands::config::set_client_type,
-            commands::task::start_up,
+            commands::task::add_task_to_queue,
+            commands::task::start_queue,
+            commands::task::remove_from_queue,
+            commands::task::get_queue,
             commands::init_maa,
         ])
         .run(tauri::generate_context!())

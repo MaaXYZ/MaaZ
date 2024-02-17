@@ -3,7 +3,7 @@
 #![allow(clippy::let_underscore_must_use)]
 #![allow(clippy::used_underscore_binding)]
 
-use tauri::{async_runtime, State};
+use tauri::State;
 
 use crate::{maa, InstHandle, MaaResult};
 pub mod config;
@@ -12,14 +12,6 @@ pub mod task;
 
 #[tauri::command]
 pub async fn init_maa(inst: State<'_, InstHandle>) -> MaaResult<()> {
-
-    let inst_handle = *inst;
-
-    let handle = async_runtime::spawn(async move {
-        maa::init_toolkit()?;
-        maa::init_resources(inst_handle)
-    });
-
-    #[allow(clippy::unwrap_used)]
-    handle.await.unwrap()
+    maa::init_toolkit()?;
+    maa::init_resources(*inst)
 }

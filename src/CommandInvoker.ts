@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import DeviceInfo from "./interface/DeviceInfo";
+import TaskStatus, { TaskType } from "./interface/TaskStatus";
 
 export default class CommandInvoker {
 
@@ -17,5 +18,26 @@ export default class CommandInvoker {
 
     public static async startUpTask():Promise<void> {
         return invoke("start_up");
+    }
+
+    public static async removeFromQueue(index:number):Promise<void> {
+        return invoke("remove_from_queue", {
+            index: index
+        });
+    }
+
+    public static async addTaskToQueue(task: TaskType, appendNext: boolean=false):Promise<void> {
+        return invoke("add_task_to_queue", {
+            task: task,
+            appendNext: appendNext
+        });
+    }
+
+    public static async getQueue():Promise<TaskStatus[]> {
+        return invoke("get_queue");
+    }
+
+    public static async startQueue():Promise<void> {
+        return invoke("start_queue");
     }
 }

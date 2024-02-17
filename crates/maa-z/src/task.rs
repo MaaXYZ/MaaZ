@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::config::start_up::StartUpConfig;
+use crate::{config::start_up::StartUpConfig, MaaError};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum TaskRunningState {
     Pending,
     Running,
@@ -11,9 +11,10 @@ pub enum TaskRunningState {
     Failed,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TaskStatus {
     pub id: Option<i64>,
+    #[serde(rename = "taskType")]
     pub task_type: TaskType,
     pub state: TaskRunningState,
 }
@@ -24,6 +25,17 @@ impl From<TaskType> for TaskStatus {
             id: None,
             task_type,
             state: TaskRunningState::Pending,
+        }
+    }
+}
+
+impl TryFrom<String> for TaskType {
+    type Error = MaaError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "StartUp" => Ok(TaskType::StartUp),
+            _ => Err(MaaError::UnknowTaskError(value)),
         }
     }
 }

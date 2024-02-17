@@ -162,7 +162,7 @@ pub fn setup_callback(
                 });
             }
             _ => {
-                unimplemented!()
+
             }
         }
     });
