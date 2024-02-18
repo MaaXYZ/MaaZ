@@ -6,10 +6,18 @@ This project has another name in Greek, μαα, which will quite resemble the or
 
 ## Build
 
-This project uses [Taskfile](https://taskfile.dev/) to manifest the build process. You can use the following commands to build the project:
+Build with pnpm
 
 ```bash
-task build
+pnpm install
+pnpm tauri build
 ```
 
-For more complete commands, refer to the `Taskfile.yml` file.
+## TODO List
+
+This is a project still in early stages of the development and our focus now is listed below.
+
+- [x] Basic UI
+- [ ] Tasks ( Help wanted! )
+- [ ] Better UI/UX ( This includes a more consistent theme and a better UX )
+- [ ] Cross-platform support ( We are currently focusing on Windows, but the ability of Tauri makes it theoretically not to hard to run on other platforms )
