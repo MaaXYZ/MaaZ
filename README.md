@@ -6,7 +6,13 @@ This project has another name in Greek, μαα, which will quite resemble the or
 
 ## Build
 
-Build with pnpm
+First you need to set up the maa framework. We provide a script to do that. The script currently only supports Windows, but you can run the commands manually if you are on another platform. Or feel free to provide a PR to add support for your platform.
+
+```bash
+python makedeps.py
+```
+
+Then build with pnpm. In fact, any node.js package manager should work, but we recommend pnpm.
 
 ```bash
 pnpm install
@@ -20,4 +26,4 @@ This is a project still in early stages of the development and our focus now is 
 - [x] Basic UI
 - [ ] Tasks ( Help wanted! )
 - [ ] Better UI/UX ( This includes a more consistent theme and a better UX )
-- [ ] Cross-platform support ( We are currently focusing on Windows, but the ability of Tauri makes it theoretically not to hard to run on other platforms )
+- [ ] Cross-platform support ( We are currently focusing on Windows, but the ability of Tauri makes it theoretically not too hard to run on other platforms )
