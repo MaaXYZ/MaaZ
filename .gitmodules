@@ -1,0 +1,3 @@
+[submodule "crates/maa-z/MaaAgentBinary"]
+	path = crates/maa-z/MaaAgentBinary
+	url = https://github.com/MaaAssistantArknights/MaaAgentBinary.git

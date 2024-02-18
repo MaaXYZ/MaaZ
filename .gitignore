@@ -23,11 +23,9 @@ dist-ssr
 *.sw?
 
 deps
-build
-crates/maa-z/config
-crates/maa-z/debug
-crates/maa-z/include
-crates/maa-z/lib
-crates/maa-z/MaaAgentBinary
-.task
-crates/target
+tauri/config
+tauri/debug
+tauri/include
+tauri/lib
+tauri/*.dll
+tauri/target
