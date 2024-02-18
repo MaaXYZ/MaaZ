@@ -207,7 +207,7 @@ unsafe extern "C" fn callback_fn(
         .trigger_global(CALLBACK_EVENT, Some(data));
 }
 
-pub fn connect_to_device(handle: &InstHandle, device_info: &DeviceInfo) -> u8 {
+pub fn connect_to_device(handle: InstHandle, device_info: &DeviceInfo) -> u8 {
     let span = trace_span!("Connect to device");
     let _guard = span.enter();
 
@@ -258,6 +258,17 @@ where
     info!(task=%task, param=%param);
 
     unsafe { MaaPostTask(handle.0, to_cstring(&task), to_cstring(&param)) }
+}
+
+pub fn stop_task(handle: InstHandle) -> MaaResult<()> {
+    let ret = unsafe { MaaPostStop(handle.0) };
+
+    if ret == 1 {
+        Ok(())
+    } else {
+        error!("MaaPostStop returned {}", ret);
+        Err(MaaError::StopTaskError)
+    }
 }
 
 #[allow(clippy::unwrap_used)]

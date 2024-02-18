@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tracing::{info, trace, trace_span};
+use tracing::{error, info, trace, trace_span};
 
 use crate::{
     config::Config,
@@ -11,6 +11,13 @@ use crate::{
 #[derive(Default, Serialize, Deserialize)]
 pub struct TaskQueue {
     queue: Vec<TaskStatus>,
+}
+
+#[derive(Debug)]
+pub enum QueueStartStatus {
+    Started,
+    AlreadyRunning,
+    NoPendingTasks,
 }
 
 impl TaskQueue {
@@ -87,10 +94,10 @@ impl TaskQueue {
             .any(|t| matches!(t.state, TaskRunningState::Running))
     }
 
-    pub fn start(&mut self, handle: InstHandle, config: &Config) -> bool {
+    pub fn start(&mut self, handle: InstHandle, config: &Config) -> QueueStartStatus {
         if !self.idle() {
             info!("Task queue is already running");
-            return false;
+            return QueueStartStatus::AlreadyRunning;
         }
 
         let has_pending = self
@@ -99,9 +106,25 @@ impl TaskQueue {
             .any(|t| matches!(t.state, TaskRunningState::Pending));
         if !has_pending {
             info!("No pending tasks to run");
-            return false;
+            return QueueStartStatus::NoPendingTasks;
         }
 
-        self.run_next(handle, config)
+        self.run_next(handle, config);
+        QueueStartStatus::Started
+    }
+
+    /// This sends a stop signal to fw and mark the running task as Pending
+    pub fn stop(&mut self, handle: InstHandle) {
+        let stop_ret = maa::stop_task(handle);
+        if stop_ret.is_err() {
+            error!("Error while stopping task");
+        }
+        if let Some(index) = self
+            .queue
+            .iter()
+            .position(|t| matches!(t.state, TaskRunningState::Running))
+        {
+            self.queue[index].state = TaskRunningState::Pending;
+        }
     }
 }

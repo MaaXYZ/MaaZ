@@ -12,7 +12,7 @@ pub async fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
 
 #[tauri::command]
 pub async fn connect_to_device(inst: State<'_, InstHandle>, device: DeviceInfo) -> MaaResult<()> {
-    let ret = maa::connect_to_device(&inst, &device);
+    let ret = maa::connect_to_device(*inst, &device);
     if ret == 1 {
         Ok(())
     } else {

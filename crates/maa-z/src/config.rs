@@ -9,6 +9,7 @@ use self::start_up::StartUpConfig;
 pub mod start_up;
 
 #[derive(Serialize, Deserialize, Default, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Config {
     pub start_up: StartUpConfig,
 }

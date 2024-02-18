@@ -2,9 +2,6 @@
     "$schema": "../../pipeline.schema.json",
     "start_up": {
         "next":[
-            "flag_in_app",
-            "sub_close_news",
-            "flag_in_app",
             "sub_click_get_daily",
             "flag_in_app",
             "sub_click_link_start",
@@ -56,17 +53,6 @@
             32,
             80,
             72
-        ],
-        "action": "Click"
-    },
-    "sub_close_news": {
-        "recognition": "TemplateMatch",
-        "template": "startup/close_news.png",
-        "roi": [
-            1162,
-            34,
-            83,
-            71
         ],
         "action": "Click"
     },

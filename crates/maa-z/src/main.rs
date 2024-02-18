@@ -75,6 +75,7 @@ fn main() {
             commands::config::set_client_type,
             commands::task::add_task_to_queue,
             commands::task::start_queue,
+            commands::task::stop_queue,
             commands::task::remove_from_queue,
             commands::task::get_queue,
             commands::init_maa,
@@ -117,6 +118,8 @@ pub enum MaaError {
     FindDeviceError,
     MaaToolkitInitError,
     InvalidCallbackEvent(String),
+    StopTaskError,
+    QueueDidnotStart,
 }
 
 impl From<std::str::Utf8Error> for MaaError {

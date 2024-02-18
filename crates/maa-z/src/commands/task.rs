@@ -2,7 +2,9 @@ use tauri::State;
 use tracing::info;
 
 use crate::{
-    task::{TaskStatus, TaskType}, ConfigHolderState, InstHandle, MaaResult, TaskQueueState
+    queue::QueueStartStatus,
+    task::{TaskStatus, TaskType},
+    ConfigHolderState, InstHandle, MaaError, MaaResult, TaskQueueState,
 };
 
 #[tauri::command]
@@ -24,12 +26,32 @@ pub async fn add_task_to_queue(
 }
 
 #[tauri::command]
-pub async fn start_queue(task_queue: State<'_, TaskQueueState>, inst: State<'_, InstHandle>, config: State<'_,ConfigHolderState>) -> MaaResult<()> {
+pub async fn start_queue(
+    task_queue: State<'_, TaskQueueState>,
+    inst: State<'_, InstHandle>,
+    config: State<'_, ConfigHolderState>,
+) -> MaaResult<()> {
     tracing::info!("Starting task queue");
     let mut queue = task_queue.lock().await;
     let config = config.clone();
     let config = config.lock().await;
-    queue.start(*inst, config.config());
+    let ret = queue.start(*inst, config.config());
+    info!("Queue start status: {:?}", ret);
+    if matches!(ret, QueueStartStatus::Started) {
+        Ok(())
+    } else {
+        Err(MaaError::QueueDidnotStart)
+    }
+}
+
+#[tauri::command]
+pub async fn stop_queue(
+    task_queue: State<'_, TaskQueueState>,
+    handle: State<'_, InstHandle>,
+) -> MaaResult<()> {
+    tracing::info!("Stopping task queue");
+    let mut queue = task_queue.lock().await;
+    queue.stop(*handle);
     Ok(())
 }
 

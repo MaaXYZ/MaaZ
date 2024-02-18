@@ -1,7 +1,7 @@
 use std::{ffi::CString, sync::Arc};
 
 use serde::{Deserialize, Serialize};
-use tauri::{async_runtime, AppHandle, Manager};
+use tauri::{api::notification::Notification, async_runtime, AppHandle, Manager};
 use tracing::{error, info, trace_span};
 
 use crate::{maa, ConfigHolderState, InstHandle, MaaError, TaskQueueState};
@@ -111,6 +111,30 @@ impl CallbackEventPayload {
     }
 }
 
+macro_rules! notify {
+    ($identifier:expr,$title:expr) => {
+        match Notification::new($identifier).title($title).show() {
+            Ok(_) => {}
+            Err(e) => {
+                error!("Error while showing notification: {}", e);
+            }
+        }
+    };
+
+    ($identifier:expr,$title:expr,$body:expr) => {
+        match Notification::new($identifier)
+            .title($title)
+            .body($body)
+            .show()
+        {
+            Ok(_) => {}
+            Err(e) => {
+                error!("Error while showing notification: {}", e);
+            }
+        }
+    };
+}
+
 pub fn setup_callback(
     app: &AppHandle,
     queue: TaskQueueState,
@@ -142,10 +166,12 @@ pub fn setup_callback(
         info!("Emitting callback event: {:?}", callback_event);
         let payload = CallbackEventPayload::new(callback_event, &payload.data);
         #[allow(clippy::unwrap_used)]
-        app_handle.emit_all(CALLBACK_EVENT, payload).unwrap();
+        app_handle.emit_all(CALLBACK_EVENT, &payload).unwrap();
 
         let app_handle = app_handle.clone();
+        let identifier = app_handle.config().tauri.bundle.identifier.clone();
 
+        #[allow(clippy::match_same_arms)]
         match callback_event {
             CallbackEvent::TaskCompleted => {
                 let queue = Arc::clone(&queue);
@@ -158,12 +184,35 @@ pub fn setup_callback(
                     if !has_next {
                         #[allow(clippy::unwrap_used)]
                         app_handle.emit_all(QUEUE_DONE_EVENT, ()).unwrap();
+                        notify!(identifier, "Task Queue Finished");
                     }
                 });
             }
-            _ => {
-
+            CallbackEvent::TaskFailed => {
+                notify!(identifier, "Task Failed", &payload.data);
             }
+            CallbackEvent::Invalid => {},
+            CallbackEvent::ResourceStartLoading => {},
+            CallbackEvent::ResourceLoadingCompleted => {},
+            CallbackEvent::ResourceLoadingFailed => {},
+            CallbackEvent::ControllerUUIDGot => {},
+            CallbackEvent::ControllerUUIDGetFailed => {},
+            CallbackEvent::ControllerResolutionGot => {},
+            CallbackEvent::ControllerResolutionGetFailed => {},
+            CallbackEvent::ControllerScreencapInited => {},
+            CallbackEvent::ControllerScreencapInitFailed => {},
+            CallbackEvent::ControllerTouchInputInited => {},
+            CallbackEvent::ControllerTouchInputInitFailed => {},
+            CallbackEvent::ControllerActionStarted => {},
+            CallbackEvent::ControllerActionCompleted => {},
+            CallbackEvent::ControllerActionFailed => {},
+            CallbackEvent::ControllerConnectSuccess => {},
+            CallbackEvent::ControllerConnectFailed => {},
+            CallbackEvent::TaskStarted => {},
+            CallbackEvent::TaskStopped => {},
+            CallbackEvent::TaskFocusHit => {},
+            CallbackEvent::TaskFocusRunout => {},
+            CallbackEvent::TaskFocusCompleted => {},
         }
     });
 }
