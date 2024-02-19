@@ -2,7 +2,7 @@
 import { useTaskQueueStore } from "@/stores/TaskQueueStore";
 import { NCard, NIcon, NDivider, NButton, useMessage } from "naive-ui";
 import { PlayFilledAlt as Play, StopFilledAlt as Stop } from "@vicons/carbon";
-import { computed, ref } from "vue";
+import { ref, watch } from "vue";
 import { TaskType, allTaskTypes } from "@/interface/TaskStatus";
 
 const taskQueueStore = useTaskQueueStore();
@@ -10,11 +10,18 @@ const taskQueueStore = useTaskQueueStore();
 const messager = useMessage();
 
 const outer = ref<HTMLDivElement | null>(null);
-const outerHeight = computed(() => {
-    if (outer.value) {
-        return outer.value.clientWidth;
+const outerHeight = ref(0);
+
+watch(outer, (el) => {
+    if (el) {
+        outerHeight.value = el.clientWidth;
     }
-    return 0;
+});
+
+window.addEventListener("resize", () => {
+    if (outer.value) {
+        outerHeight.value = outer.value.clientWidth;
+    }
 });
 
 function queueAction() {
