@@ -20,7 +20,7 @@ export const useDeviceStateStore = defineStore('device-state',{
             this.devices = devices;
         },
         async connectTo(device:DeviceInfo) {
-            CommandInvoker.connectTo(device).then(() => {
+            return CommandInvoker.connectTo(device).then(() => {
                 console.log("Connected to device", device);
                 this.connectedDevice = device;
             });

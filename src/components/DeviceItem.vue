@@ -28,7 +28,7 @@ function connectToDevice() {
 </script>
 
 <template>
-    <n-flex justify="space-between" class="px-4">
+    <n-flex justify="space-between" align="center" class="px-4">
         <n-flex vertical>
             <n-tooltip :show-arrow="false" placement="bottom">
                 <template #trigger>
@@ -47,17 +47,17 @@ function connectToDevice() {
         </n-flex>
         <n-button
             :loading="deviceConnecting"
-            text
             :disabled="deviceConnected"
             @click="connectToDevice"
-            class="text-2xl"
         >
-            <n-icon color="#55EE55" v-if="deviceConnected">
-                <send-alt-filled />
-            </n-icon>
-            <n-icon v-else>
-                <send-alt />
-            </n-icon>
+            <template #icon>
+                <n-icon color="#55EE55" v-if="deviceConnected">
+                    <send-alt-filled />
+                </n-icon>
+                <n-icon v-else-if="!deviceConnecting">
+                    <send-alt />
+                </n-icon>
+            </template>
         </n-button>
     </n-flex>
 </template>
