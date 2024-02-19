@@ -1,0 +1,25 @@
+{
+    "$schema": "../../pipeline.schema.json",
+    "flag_in_app": {
+        "recognition": "TemplateMatch",
+        "template": "startup/in_app.png",
+        "roi": [
+            17,
+            8,
+            289,
+            60
+        ]
+    },
+    "sub_tap_home":{
+        "is_sub": true,
+        "recognition": "TemplateMatch",
+        "template": "common/home.png",
+        "roi": [
+            200,
+            11,
+            135,
+            50
+        ],
+        "action": "Click"
+    }
+}

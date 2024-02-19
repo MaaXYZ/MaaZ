@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::{config::start_up::StartUpConfig, MaaError};
+use crate::{config::{award::AwardConfig, start_up::StartUpConfig}, MaaError};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum TaskRunningState {
@@ -35,6 +35,7 @@ impl TryFrom<String> for TaskType {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.as_str() {
             "StartUp" => Ok(TaskType::StartUp),
+            "Award" => Ok(TaskType::Award),
             _ => Err(MaaError::UnknowTaskError(value)),
         }
     }
@@ -43,12 +44,14 @@ impl TryFrom<String> for TaskType {
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum TaskType {
     StartUp,
+    Award
 }
 
 impl TaskType {
     pub fn get_string(self) -> String {
         match self {
             TaskType::StartUp => "start_up".to_owned(),
+            TaskType::Award => "award".to_owned(),
         }
     }
 }
@@ -77,5 +80,20 @@ impl From<StartUpConfig> for StartUpParam {
         Self {
             package: config.client_type.get_package_name(),
         }
+    }
+}
+
+#[derive(Serialize)]
+pub struct AwardParam;
+
+impl TaskParam for AwardParam {
+    fn get_param(&self) -> Value {
+        json!({})
+    }
+}
+
+impl From<AwardConfig> for AwardParam {
+    fn from(_: AwardConfig) -> Self {
+        Self
     }
 }

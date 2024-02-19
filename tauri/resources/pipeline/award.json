@@ -1,0 +1,38 @@
+{
+    "$schema": "../../pipeline.schema.json",
+    "award": {
+        "next":[
+            "sub_tap_home",
+            "click_tasks"
+        ]
+    },
+    "click_tasks":{
+        "recognition": "OCR",
+        "text": "任务",
+        "action": "Click",
+        "next":[
+            "sub_collect_all"
+        ]
+    },
+    "collect_daily":{
+        "next":[
+            "sub_collect_all",
+            "collect_weekly"
+        ]
+    },
+    "sub_collect_all":{
+        "is_sub": true,
+        "recognition": "OCR",
+        "text": "收集全部",
+        "action": "Click"
+    },
+    "collect_weekly":{
+        "recognition": "OCR",
+        "text": "周常任务",
+        "action": "Click",
+        "next":[
+            "sub_collect_all",
+            "sub_tap_home"
+        ]
+    }
+}

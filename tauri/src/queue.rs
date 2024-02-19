@@ -4,7 +4,7 @@ use tracing::{error, info, trace, trace_span};
 use crate::{
     config::Config,
     maa,
-    task::{StartUpParam, TaskRunningState, TaskStatus, TaskType},
+    task::{AwardParam, StartUpParam, TaskRunningState, TaskStatus, TaskType},
     InstHandle,
 };
 
@@ -77,7 +77,12 @@ impl TaskQueue {
                     let start_up_config = config.start_up.clone();
                     let start_up_param: StartUpParam = start_up_config.into();
                     maa::post_task(handle, task.task_type, &start_up_param)
-                }
+                },
+                TaskType::Award => {
+                    let award_config = config.award.clone();
+                    let award_param: AwardParam = award_config.into();
+                    maa::post_task(handle, task.task_type, &award_param)
+                },
             };
             task.id = Some(id);
             true

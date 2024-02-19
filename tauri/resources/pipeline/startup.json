@@ -55,15 +55,5 @@
             72
         ],
         "action": "Click"
-    },
-    "flag_in_app": {
-        "recognition": "TemplateMatch",
-        "template": "startup/in_app.png",
-        "roi": [
-            17,
-            8,
-            289,
-            60
-        ]
     }
 }

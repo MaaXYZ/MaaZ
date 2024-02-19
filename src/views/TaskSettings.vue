@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { NTabs, NTabPane, NFlex, NCard } from "naive-ui";
+import { NTabs, NTabPane, NCard } from "naive-ui";
 import { allTaskTypes } from "@/interface/TaskStatus";
 import StartUpSettings from "./settings/StartUpSettings.vue";
+import EmptySettings from "./settings/EmptySettings.vue";
 
 const tabs = {
     StartUp: StartUpSettings,
-    Test: NFlex,
+    Award: EmptySettings
 };
 </script>
 
