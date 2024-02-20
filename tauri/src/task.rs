@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
-use crate::{config::{award::AwardConfig, start_up::StartUpConfig}, MaaError};
+use crate::{
+    config::{award::AwardConfig, start_up::StartUpConfig},
+    MaaError,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum TaskRunningState {
@@ -44,7 +47,7 @@ impl TryFrom<String> for TaskType {
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum TaskType {
     StartUp,
-    Award
+    Award,
 }
 
 impl TaskType {

@@ -1,41 +1,39 @@
 {
-  "build": {
-    "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
-  },
-  "package": {
-    "productName": "maa-z",
-    "version": "0.0.1"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      }
+  "app": {
+    "security": {
+      "csp": null
     },
     "windows": [
       {
         "fullscreen": false,
+        "height": 720,
         "resizable": true,
         "title": "maa-z",
-        "width": 1280,
-        "height": 720
+        "width": 1280
       }
+    ]
+  },
+  "build": {
+    "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/icon.ico"
     ],
-    "security": {
-      "csp": null
-    },
-    "bundle": {
-      "active": true,
-      "targets": ["msi"],
-      "identifier": "org.maa.maaz",
-      "icon": [
-       "icons/icon.ico"
-      ]
+    "targets": [
+      "msi"
+    ]
+  },
+  "identifier": "org.maa.maaz",
+  "plugins": {
+    "shell": {
+      "open": true
     }
-  }
+  },
+  "productName": "maa-z",
+  "version": "0.0.1"
 }

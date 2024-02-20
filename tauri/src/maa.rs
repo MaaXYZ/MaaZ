@@ -28,7 +28,7 @@ use std::{
     mem,
     ptr::{null, null_mut},
 };
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, EventTarget, Manager};
 use tracing::{error, event, info, trace, trace_span, Level};
 use uuid::Uuid;
 
@@ -144,7 +144,7 @@ pub fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
     Ok(ret)
 }
 
-pub fn get_maa_handle(app: AppHandle) -> MaaInstanceHandle {
+pub fn get_maa_handle(app: &AppHandle) -> MaaInstanceHandle {
     let span = trace_span!("Creating Maa handle");
     let _guard = span.enter();
 
@@ -204,7 +204,8 @@ unsafe extern "C" fn callback_fn(
     handler
         .as_ref()
         .unwrap()
-        .trigger_global(CALLBACK_EVENT, Some(data));
+        .emit_to(EventTarget::App, CALLBACK_EVENT, Some(data))
+        .unwrap();
 }
 
 pub fn connect_to_device(handle: InstHandle, device_info: &DeviceInfo) -> u8 {

@@ -6,8 +6,8 @@ use crate::MaaResult;
 
 use self::{award::AwardConfig, start_up::StartUpConfig};
 
-pub mod start_up;
 pub mod award;
+pub mod start_up;
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 #[serde(rename_all = "camelCase")]

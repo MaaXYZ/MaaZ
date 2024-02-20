@@ -22,6 +22,7 @@ dist-ssr
 *.sln
 *.sw?
 
+# Dependency directories and rust generated files
 deps
 tauri/config
 tauri/debug
@@ -29,3 +30,5 @@ tauri/include
 tauri/lib
 tauri/*.dll
 tauri/target
+# Tauri generated files
+tauri/gen
