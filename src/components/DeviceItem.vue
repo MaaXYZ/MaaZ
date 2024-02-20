@@ -32,7 +32,7 @@ function connectToDevice() {
         <n-flex vertical>
             <n-tooltip :show-arrow="false" placement="bottom">
                 <template #trigger>
-                    <p>{{ props.device.name }}</p>
+                    <p class="truncate max-w-56">{{ props.device.name }}</p>
                 </template>
                 <n-flex vertical>
                     <p>{{ device.name }}</p>
