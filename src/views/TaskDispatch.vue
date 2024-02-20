@@ -2,31 +2,17 @@
 import { onMounted } from "vue";
 import { NFlex, NDivider, useMessage } from "naive-ui";
 import { useMaaStateStore } from "@/stores/MaaStateStore";
-import { useTaskQueueStore } from "@/stores/TaskQueueStore";
-import { listen } from "@tauri-apps/api/event";
-import CallbackPayload from "@/interface/CallbackPayload";
 import TaskQueue from "./TaskQueue.vue";
 import TaskSettings from "./TaskSettings.vue";
 import TaskCommand from "./TaskCommand.vue";
 
 const maaStateStore = useMaaStateStore();
 
-const taskQueueStore = useTaskQueueStore();
-
 const messager = useMessage();
 
 onMounted(() => {
     maaStateStore.getConfig().catch((err) => {
         messager.error("Failed to get MAA config: " + err);
-    });
-
-    listen<CallbackPayload>("callback", (event) => {
-        console.log(event);
-        taskQueueStore.updateQueue();
-    });
-
-    listen("queue-done", (_event) => {
-        taskQueueStore.queueRunning = false;
     });
 });
 </script>

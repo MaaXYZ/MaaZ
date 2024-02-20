@@ -71,3 +71,9 @@ pub async fn get_queue(task_queue: State<'_, TaskQueueState>) -> MaaResult<Vec<T
     let queue = task_queue.lock().await;
     Ok(queue.current_queue())
 }
+
+#[tauri::command]
+pub async fn get_queue_state(task_queue: State<'_, TaskQueueState>) -> MaaResult<bool> {
+    let queue = task_queue.lock().await;
+    Ok(!queue.idle())
+}

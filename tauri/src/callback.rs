@@ -10,7 +10,7 @@ use crate::{maa, ConfigHolderState, InstHandle, MaaError, TaskQueueState};
 pub const CALLBACK_EVENT: &str = "callback";
 pub const QUEUE_DONE_EVENT: &str = "queue-done";
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct CallbackTriggerPayload {
     pub msg: String,
     pub data: String,

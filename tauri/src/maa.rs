@@ -30,7 +30,6 @@ use std::{
 };
 use tauri::{AppHandle, EventTarget, Manager};
 use tracing::{error, event, info, trace, trace_span, Level};
-use uuid::Uuid;
 
 pub use internal::MaaInstanceAPI;
 
@@ -144,7 +143,7 @@ pub fn find_devices() -> MaaResult<Vec<DeviceInfo>> {
     Ok(ret)
 }
 
-pub fn get_maa_handle(app: &AppHandle) -> MaaInstanceHandle {
+pub fn get_maa_handle(app: AppHandle) -> MaaInstanceHandle {
     let span = trace_span!("Creating Maa handle");
     let _guard = span.enter();
 
@@ -194,17 +193,12 @@ unsafe extern "C" fn callback_fn(
     event!(Level::TRACE, msg=%msg, details=%details);
 
     let trigger_payload = CallbackTriggerPayload::new(msg, details);
-    let data = serde_json::to_string(&trigger_payload)
-        .inspect_err(|e| {
-            error!("Failed to serialize callback payload: {}", e);
-        })
-        .unwrap_or_default();
 
     #[allow(clippy::unwrap_used)]
     handler
         .as_ref()
         .unwrap()
-        .emit_to(EventTarget::App, CALLBACK_EVENT, Some(data))
+        .emit_to(EventTarget::app(), CALLBACK_EVENT, trigger_payload)
         .unwrap();
 }
 

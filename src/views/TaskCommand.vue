@@ -4,6 +4,7 @@ import { NCard, NIcon, NDivider, NButton, useMessage } from "naive-ui";
 import { PlayFilledAlt as Play, StopFilledAlt as Stop } from "@vicons/carbon";
 import { ref, watch } from "vue";
 import { TaskType, allTaskTypes } from "@/interface/TaskStatus";
+import CommandInvoker from "@/CommandInvoker";
 
 const taskQueueStore = useTaskQueueStore();
 
@@ -39,6 +40,13 @@ function addTask(task: TaskType) {
         messager.error(err.message);
     });
 }
+
+function startMiniWindow() {
+    CommandInvoker.startMiniWindow().catch((e)=>{
+        messager.error(e.message);
+    })
+}
+
 </script>
 
 <template>
@@ -54,7 +62,8 @@ function addTask(task: TaskType) {
                 <Play v-else />
             </n-icon>
         </div>
-        <n-divider />
+        <n-button class="w-full mt-2" @click="startMiniWindow">Mini Window</n-button>
+        <n-divider>Tasks</n-divider>
         <n-button
             secondary
             type="primary"

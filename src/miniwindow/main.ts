@@ -1,10 +1,14 @@
 import { createApp } from "vue";
 import MiniWindow from "./MiniWindow.vue";
 import { createPinia } from "pinia";
+import "../styles.css";
+import { setupListener } from "@/CallbackListner";
 
-const app = createApp(MiniWindow)
+const app = createApp(MiniWindow);
 
-const pinia = createPinia()
-app.use(pinia)
+const pinia = createPinia();
+app.use(pinia);
 
-app.mount("#miniwindow")
+setupListener();
+
+app.mount("#miniwindow");

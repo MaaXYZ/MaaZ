@@ -55,7 +55,7 @@ pub fn run() {
             let task_queue = TaskQueueState::default();
             app.manage(Arc::clone(&task_queue));
 
-            let handle = maa::get_maa_handle(app.app_handle());
+            let handle = maa::get_maa_handle(app.app_handle().clone());
             let inst = InstHandle(handle);
 
             app.manage(inst);
@@ -80,7 +80,10 @@ pub fn run() {
             commands::task::stop_queue,
             commands::task::remove_from_queue,
             commands::task::get_queue,
+            commands::task::get_queue_state,
             commands::init_maa,
+            commands::start_mini_window,
+            commands::set_window_on_top,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -122,6 +125,7 @@ pub enum MaaError {
     InvalidCallbackEvent(String),
     StopTaskError,
     QueueDidnotStart,
+    TauriError(String)
 }
 
 impl From<std::str::Utf8Error> for MaaError {
@@ -145,5 +149,11 @@ impl From<toml::de::Error> for MaaError {
 impl From<toml::ser::Error> for MaaError {
     fn from(e: toml::ser::Error) -> Self {
         MaaError::TOMLSerError(e.to_string())
+    }
+}
+
+impl From<tauri::Error> for MaaError {
+    fn from(e: tauri::Error) -> Self {
+        MaaError::TauriError(e.to_string())
     }
 }

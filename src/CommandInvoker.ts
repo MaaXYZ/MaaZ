@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import DeviceInfo from "./interface/DeviceInfo";
 import TaskStatus, { TaskType } from "./interface/TaskStatus";
 import { MaaConfig } from "./interface/MaaConfig";
@@ -48,6 +48,10 @@ export default class CommandInvoker {
         return invoke("stop_queue");
     }
 
+    public static async getQueueState(): Promise<boolean> {
+        return invoke("get_queue_state");
+    }
+
     public static async getConfig(): Promise<MaaConfig> {
         return invoke("get_config");
     }
@@ -56,5 +60,9 @@ export default class CommandInvoker {
         return invoke("set_client_type", {
             value: clientType,
         });
+    }
+
+    public static async startMiniWindow(): Promise<void> {
+        return invoke("start_mini_window");
     }
 }

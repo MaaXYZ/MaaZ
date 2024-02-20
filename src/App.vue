@@ -3,7 +3,6 @@ import { NFlex, NSplit, NConfigProvider, NMessageProvider } from "naive-ui";
 import DeviceConnection from "./views/DeviceConnection.vue";
 import TaskDispatch from "./views/TaskDispatch.vue";
 import { onMounted } from "vue";
-import { listen } from "@tauri-apps/api/event";
 import CommandInvoker from "./CommandInvoker";
 import { useMaaStateStore } from "./stores/MaaStateStore";
 
@@ -15,10 +14,6 @@ onMounted(() => {
     CommandInvoker.initMaa().then(() => {
         console.log("Maa initialized");
         maaStateStore.noteResourceInited();
-    });
-
-    listen("callback", (event) => {
-        console.log("Callback received: ", event.payload);
     });
 });
 </script>

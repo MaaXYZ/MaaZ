@@ -23,5 +23,13 @@ export default defineConfig(async () => ({
     alias: {
       '@': resolve(__dirname, 'src'),
     },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        miniwindow: resolve(__dirname, 'mini.html'),
+      }
+    }
   }
 }));

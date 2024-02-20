@@ -3,9 +3,12 @@
   "description": "permissions that were migrated from v1",
   "context": "local",
   "windows": [
-    "main"
+    "main","mini"
   ],
-  "permissions": [],
+  "permissions": [
+    "event:allow-listen",
+    "notification:allow-is-permission-granted"
+  ],
   "platforms": [
     "linux",
     "macOS",

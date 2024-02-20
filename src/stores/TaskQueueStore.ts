@@ -18,10 +18,11 @@ export const useTaskQueueStore = defineStore("task-queue", {
     actions: {
         async removeFromQueue(index: number) {
             CommandInvoker.removeFromQueue(index).then(() => {
-                this.taskQueue.splice(index, 1);
+                this.updateQueue();
             });
         },
         async addToQueue(task: TaskType, append_next: boolean = false) {
+            console.log("Adding task to queue: ", task);
             CommandInvoker.addTaskToQueue(task, append_next).then(() => {
                 this.updateQueue();
             });
@@ -29,19 +30,25 @@ export const useTaskQueueStore = defineStore("task-queue", {
         async updateQueue() {
             CommandInvoker.getQueue().then((queue) => {
                 this.taskQueue = queue;
+                this.updateQueueState()
             });
         },
         async startQueue() {
             CommandInvoker.startQueue().then(() => {
-                this.queueRunning = true;
+                this.updateQueueState();
                 this.updateQueue();
             });
         },
         async stopQueue() {
             CommandInvoker.stopQueue().then(() => {
-                this.queueRunning = false;
+                this.updateQueueState();
                 this.updateQueue();
             });
         },
+        async updateQueueState() {
+            CommandInvoker.getQueueState().then((state) => {
+                this.queueRunning = state;
+            });
+        }
     },
 });
