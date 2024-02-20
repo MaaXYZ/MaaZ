@@ -7,7 +7,7 @@ from tqdm import tqdm
 import zipfile
 
 # Dependency versions
-maafw_version = "v1.5.0"
+maafw_version = "v1.6.0-beta.4"
 
 def copy_file_recursively(src, dst, system):
     if os.path.isdir(src):
@@ -84,11 +84,11 @@ def setup_maafw_dynamic_libs(host_system, fw_dir):
     lib_dir = os.path.join(fw_dir, "bin")
     copy_file_recursively(lib_dir, os.path.join("tauri"), host_system)
 
-def setup_maafw(host_system, host_arch, dst):
+def setup_maafw(host_system, host_arch, dst, force=False):
     print("Setting up MAA Framework")
     print("Downloading MAA Framework " + maafw_version)
     maafw_zip = os.path.join(dst, "maafw.zip")
-    if os.path.exists(maafw_zip):
+    if os.path.exists(maafw_zip) and not force:
         print("MAA Framework already downloaded")
     else:
         maafw_base_url = "https://github.com/MaaAssistantArknights/MaaFramework/releases/download/"
@@ -115,10 +115,15 @@ def setup_maafw(host_system, host_arch, dst):
 
 
 def main():
+    # if -f is passed, force download
+    force = False
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "-f":
+            force = True
     host_system, host_arch = figure_triplet()
     print("Setting up dependencies for " + host_system + "-" + host_arch)
     triplet_dir = setup_deps_dir()
-    setup_maafw(host_system, host_arch, triplet_dir)
+    setup_maafw(host_system, host_arch, triplet_dir,force)
 
 if __name__ == "__main__":
     main()
