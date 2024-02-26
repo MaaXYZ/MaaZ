@@ -1,11 +1,11 @@
+use maa_framework::instance::MaaInstance;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info, trace, trace_span};
 
 use crate::{
+    callback::CallbackEventHandler,
     config::Config,
-    maa,
     task::{AwardParam, StartUpParam, TaskRunningState, TaskStatus, TaskType},
-    InstHandle,
 };
 
 #[derive(Default, Serialize, Deserialize)]
@@ -59,7 +59,11 @@ impl TaskQueue {
     }
 
     /// Mark the running task as completed and start the next task
-    pub fn run_next(&mut self, handle: InstHandle, config: &Config) -> bool {
+    pub fn run_next(
+        &mut self,
+        handle: &MaaInstance<CallbackEventHandler>,
+        config: &Config,
+    ) -> bool {
         let span = trace_span!("run_next");
         let _guard = span.enter();
         self.complete_running();
@@ -72,16 +76,19 @@ impl TaskQueue {
             self.queue[index].state = TaskRunningState::Running;
             let task = &mut self.queue[index];
             info!("Running task {:?}", task);
+
+            let entry = task.task_type.get_string();
+
             let id = match task.task_type {
                 TaskType::StartUp => {
                     let start_up_config = config.start_up.clone();
                     let start_up_param: StartUpParam = start_up_config.into();
-                    maa::post_task(handle, task.task_type, &start_up_param)
+                    handle.post_task(&entry, start_up_param)
                 }
                 TaskType::Award => {
                     let award_config = config.award.clone();
                     let award_param: AwardParam = award_config.into();
-                    maa::post_task(handle, task.task_type, &award_param)
+                    handle.post_task(&entry, award_param)
                 }
             };
             task.id = Some(id);
@@ -99,7 +106,11 @@ impl TaskQueue {
             .any(|t| matches!(t.state, TaskRunningState::Running))
     }
 
-    pub fn start(&mut self, handle: InstHandle, config: &Config) -> QueueStartStatus {
+    pub fn start(
+        &mut self,
+        handle: &MaaInstance<CallbackEventHandler>,
+        config: &Config,
+    ) -> QueueStartStatus {
         if !self.idle() {
             info!("Task queue is already running");
             return QueueStartStatus::AlreadyRunning;
@@ -119,8 +130,8 @@ impl TaskQueue {
     }
 
     /// This sends a stop signal to fw and mark the running task as Pending
-    pub fn stop(&mut self, handle: InstHandle) {
-        let stop_ret = maa::stop_task(handle);
+    pub fn stop(&mut self, handle: &MaaInstance<CallbackEventHandler>) {
+        let stop_ret = handle.post_stop();
         if stop_ret.is_err() {
             error!("Error while stopping task");
         }

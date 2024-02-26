@@ -2,7 +2,7 @@ use std::{fs::read_to_string, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::MaaResult;
+use crate::MaaZInnerResult;
 
 use self::{award::AwardConfig, start_up::StartUpConfig};
 
@@ -24,7 +24,7 @@ pub struct ConfigHolder {
 }
 
 impl ConfigHolder {
-    pub fn new(config_file: PathBuf) -> MaaResult<Self> {
+    pub fn new(config_file: PathBuf) -> MaaZInnerResult<Self> {
         if !std::path::Path::new(&config_file).exists() {
             tracing::info!(
                 "Config file does not exist, creating a new one at {:?}",
@@ -53,7 +53,7 @@ impl ConfigHolder {
         &self.config
     }
 
-    pub fn write<F>(&mut self, f: F) -> MaaResult<()>
+    pub fn write<F>(&mut self, f: F) -> MaaZInnerResult<()>
     where
         F: FnOnce(&mut Config),
     {

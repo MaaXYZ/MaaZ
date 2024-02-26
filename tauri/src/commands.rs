@@ -3,23 +3,44 @@
 #![allow(clippy::let_underscore_must_use)]
 #![allow(clippy::used_underscore_binding)]
 
-use tauri::{AppHandle, State, Window};
+use std::sync::Arc;
 
-use crate::{maa, InstHandle, MaaResult};
+use maa_framework::MaaStatus;
+use tauri::{AppHandle, State, Window};
+use tracing::{trace, trace_span};
+
+use crate::{Instance, MaaZResult, ResourceInstance};
 pub mod config;
 pub mod device;
 pub mod task;
 
 #[tauri::command]
-pub async fn init_maa(inst: State<'_, InstHandle>) -> MaaResult<()> {
-    maa::init_toolkit()?;
-    maa::init_resources(*inst)
+pub async fn init_maa(
+    inst: State<'_, Arc<Instance>>,
+    resource: State<'_, ResourceInstance>,
+) -> MaaZResult<()> {
+    let span = trace_span!("init_maa");
+    let _guard = span.enter();
+
+    // init resources
+    trace!("init resources");
+    let resource_path = "resources";
+    let id = resource.post_path(resource_path);
+
+    let ret = resource.wait(id)?;
+
+    if let MaaStatus::Success = ret {
+        inst.bind_resource(&resource)?;
+        return Ok(());
+    }
+
+    Err(crate::MaaZError::ResourceInitError)
 }
 
 #[tauri::command]
 #[allow(clippy::unused_async)]
 // This needs to be async otherwise it will cause deadlock on windows
-pub async fn start_mini_window(app: AppHandle) -> MaaResult<()> {
+pub async fn start_mini_window(app: AppHandle) -> MaaZResult<()> {
     tauri::WebviewWindowBuilder::new(&app, "mini", tauri::WebviewUrl::App("mini.html".into()))
         .title("MaaZ Mini")
         .inner_size(256.0, 512.0)
@@ -32,7 +53,7 @@ pub async fn start_mini_window(app: AppHandle) -> MaaResult<()> {
 }
 
 #[tauri::command]
-pub async fn set_window_on_top(window:Window, on_top: bool) -> MaaResult<()> {
+pub async fn set_window_on_top(window: Window, on_top: bool) -> MaaZResult<()> {
     window.set_always_on_top(on_top)?;
     Ok(())
 }

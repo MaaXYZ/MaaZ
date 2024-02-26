@@ -7,7 +7,7 @@ from tqdm import tqdm
 import zipfile
 
 # Dependency versions
-maafw_version = "v1.6.0-beta.4"
+maafw_version = "v1.6.0"
 
 def copy_file_recursively(src, dst, system):
     if os.path.isdir(src):
@@ -67,10 +67,6 @@ def setup_deps_dir():
 
     return deps_dir
 
-def setup_maafw_link_libs(host_system, fw_dir):
-    lib_dir = os.path.join(fw_dir, "lib") if host_system == "windows" else os.path.join(fw_dir, "bin")
-    copy_file_recursively(lib_dir, os.path.join("tauri", "lib"), host_system)
-
 def setup_maafw_dynamic_libs(host_system, fw_dir):
     needed_libs = [
         "fastdeploy_ppocr_maa",
@@ -101,14 +97,6 @@ def setup_maafw(host_system, host_arch, dst, force=False):
     extracted_path = os.path.join(dst, "maafw")
     with zipfile.ZipFile(maafw_zip, 'r') as zip_ref:
         zip_ref.extractall(extracted_path)
-
-    print("Copying MAA Framework include files")
-    include_dir = os.path.join(extracted_path, "include")
-    src_include_dir = os.path.join("tauri", "include")
-    copy_file_recursively(include_dir, src_include_dir, host_system)
-
-    print("Copying MAA Framework link libraries")
-    setup_maafw_link_libs(host_system, extracted_path)
 
     print("Copying MAA Framework dynamic libraries")
     setup_maafw_dynamic_libs(host_system, extracted_path)

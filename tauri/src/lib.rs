@@ -1,38 +1,47 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![feature(error_generic_member_access)]
+#![allow(clippy::result_large_err)]
 
+use std::backtrace::Backtrace;
+use std::error::request_ref;
+use std::process::exit;
 use std::sync::Arc;
 
-use maa::MaaInstanceAPI;
+use maa_framework::{
+    controller::MaaControllerInstance, instance::MaaInstance, resource::MaaResourceInstance,
+    toolkit::MaaToolkit
+};
 use queue::TaskQueue;
 use serde::Serialize;
-use tauri::{async_runtime::Mutex, Manager};
+use tauri::{
+    async_runtime::{channel, spawn, Mutex},
+    App, Manager,
+};
+use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_dialog::MessageDialogBuilder;
+use thiserror::Error;
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::fmt::time::OffsetTime;
 
-use crate::callback::setup_callback;
+use crate::callback::{setup_callback, CallbackEventHandler};
 
 mod callback;
 mod commands;
 mod config;
-mod maa;
 mod queue;
 mod task;
-
-#[derive(Clone, Copy)]
-#[repr(transparent)]
-pub struct InstHandle(*mut MaaInstanceAPI);
-
-// Safety: InstHandle is Send and Sync because MaaInstanceAPI is Send and Sync
-unsafe impl Send for InstHandle {}
-// Safety: InstHandle is Send and Sync because MaaInstanceAPI is Send and Sync
-unsafe impl Sync for InstHandle {}
 
 pub type ConfigHolderState = Arc<Mutex<config::ConfigHolder>>;
 
 pub type TaskQueueState = Arc<Mutex<TaskQueue>>;
 
+pub type Instance = MaaInstance<CallbackEventHandler>;
+pub type ResourceInstance = MaaResourceInstance<CallbackEventHandler>;
+pub type ControllerInstance = Mutex<Option<MaaControllerInstance<CallbackEventHandler>>>;
+
+#[allow(clippy::unwrap_used)]
 // TODO: Error handle instead of expect
 pub fn run() {
     let _guard = init_tracing();
@@ -41,31 +50,23 @@ pub fn run() {
 
     #[allow(clippy::expect_used)]
     #[allow(clippy::str_to_string)]
-    tauri::Builder::default()
+    let ret = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
-            let path =
-                std::env::current_exe().expect("error while getting current executable path");
-            let config_file = path.with_file_name("maa.toml");
-            let config =
-                config::ConfigHolder::new(config_file).expect("error while reading config file");
-            let config = Arc::new(Mutex::new(config));
-            app.manage(Arc::clone(&config));
+            let ret = setup_app(app);
 
-            let task_queue = TaskQueueState::default();
-            app.manage(Arc::clone(&task_queue));
+            if let Err(e) = ret {
+                let dialog = app.dialog();
+                let backtrace = request_ref::<Backtrace>(&e);
+                let backtrace = backtrace.map(|b| format!("{b}")).unwrap_or_default();
+                let msg = format!("Error during initialization: {e}\n{backtrace}");
+                MessageDialogBuilder::new(dialog.clone(), "Error during initialization", msg)
+                    .kind(tauri_plugin_dialog::MessageDialogKind::Error)
+                    .blocking_show();
 
-            let handle = maa::get_maa_handle(app.app_handle().clone());
-            let inst = InstHandle(handle);
-
-            app.manage(inst);
-
-            setup_callback(
-                app.app_handle(),
-                Arc::clone(&task_queue),
-                Arc::clone(&config),
-                inst,
-            );
+                exit(1);
+            }
 
             Ok(())
         })
@@ -85,11 +86,56 @@ pub fn run() {
             commands::start_mini_window,
             commands::set_window_on_top,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .run(tauri::generate_context!());
+
+    if let Err(e) = ret {
+        tracing::error!("Error during tauri run: {:?}", e);
+    }
 }
 
-#[allow(clippy::absolute_paths)]
+fn setup_app(app: &mut App) -> MaaZInnerResult<()> {
+
+    let path = std::env::current_exe()?;
+
+    let config_file = path.with_file_name("maa.toml");
+    let config = config::ConfigHolder::new(config_file)?;
+    let config = Arc::new(Mutex::new(config));
+    app.manage(Arc::clone(&config));
+
+    let task_queue = TaskQueueState::default();
+    app.manage(Arc::clone(&task_queue));
+
+    let (sender, receiver) = channel(5);
+    let callback = CallbackEventHandler::new(sender);
+    let instance = MaaInstance::new(Some(callback));
+    let instance = Arc::new(instance);
+    app.manage(Arc::clone(&instance));
+
+    let toolkit = MaaToolkit::new()?;
+    app.manage(toolkit);
+
+    let controller = ControllerInstance::default();
+    app.manage(Arc::new(controller));
+
+    let resource: MaaResourceInstance<CallbackEventHandler> = MaaResourceInstance::new(None);
+    app.manage(resource);
+
+    let app_handle = app.app_handle().clone();
+
+    spawn(async move {
+        setup_callback(
+            app_handle,
+            Arc::clone(&task_queue),
+            config,
+            Arc::clone(&instance),
+            receiver,
+        )
+        .await;
+    });
+
+    Ok(())
+}
+
 fn init_tracing() -> WorkerGuard {
     let file_appender = tracing_appender::rolling::daily("logs", "maa.log");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
@@ -107,53 +153,64 @@ fn init_tracing() -> WorkerGuard {
     guard
 }
 
-pub type MaaResult<T> = Result<T, MaaError>;
+pub type MaaZInnerResult<T> = Result<T, MaaZInnerError>;
+
+#[derive(Error, Debug)]
+pub enum MaaZInnerError {
+    #[error("IO Error: {0}")]
+    IOError(#[from] std::io::Error, #[backtrace] std::backtrace::Backtrace),
+
+    #[error("TOML De Error: {0}")]
+    TOMLDeError(#[from] toml::de::Error, #[backtrace] std::backtrace::Backtrace),
+
+    #[error("TOML Ser Error: {0}")]
+    TOMLSerError(#[from] toml::ser::Error, #[backtrace] std::backtrace::Backtrace),
+
+    #[error("Maa Error: {0}")]
+    MaaError(#[from] maa_framework::error::Error, #[backtrace] std::backtrace::Backtrace),
+}
+
+pub type MaaZResult<T> = Result<T, MaaZError>;
 
 #[derive(Serialize, Debug)]
-pub enum MaaError {
+pub enum MaaZError {
     Utf8Error(String),
-    MaaHandleInitError,
-    DeviceConnectionError,
     IOError(String),
-    TOMLDeError(String),
-    TOMLSerError(String),
-    UnknowTaskError(String),
+    TauriError(String),
+    MaaError(String),
     ResourceInitError,
-    ResourceBindError,
-    FindDeviceError,
-    MaaToolkitInitError,
-    InvalidCallbackEvent(String),
-    StopTaskError,
+    ConnectionError,
     QueueDidnotStart,
-    TauriError(String)
+    UnknowTaskError(String),
+    MaaZInnerError(String)
 }
 
-impl From<std::str::Utf8Error> for MaaError {
+impl From<std::str::Utf8Error> for MaaZError {
     fn from(e: std::str::Utf8Error) -> Self {
-        MaaError::Utf8Error(e.to_string())
+        MaaZError::Utf8Error(e.to_string())
     }
 }
 
-impl From<std::io::Error> for MaaError {
+impl From<std::io::Error> for MaaZError {
     fn from(e: std::io::Error) -> Self {
-        MaaError::IOError(e.to_string())
+        MaaZError::IOError(e.to_string())
     }
 }
 
-impl From<toml::de::Error> for MaaError {
-    fn from(e: toml::de::Error) -> Self {
-        MaaError::TOMLDeError(e.to_string())
-    }
-}
-
-impl From<toml::ser::Error> for MaaError {
-    fn from(e: toml::ser::Error) -> Self {
-        MaaError::TOMLSerError(e.to_string())
-    }
-}
-
-impl From<tauri::Error> for MaaError {
+impl From<tauri::Error> for MaaZError {
     fn from(e: tauri::Error) -> Self {
-        MaaError::TauriError(e.to_string())
+        MaaZError::TauriError(e.to_string())
+    }
+}
+
+impl From<maa_framework::error::Error> for MaaZError {
+    fn from(e: maa_framework::error::Error) -> Self {
+        MaaZError::MaaError(e.to_string())
+    }
+}
+
+impl From<MaaZInnerError> for MaaZError {
+    fn from(e: MaaZInnerError) -> Self {
+        MaaZError::MaaZInnerError(e.to_string())
     }
 }

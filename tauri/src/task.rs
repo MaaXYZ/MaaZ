@@ -1,9 +1,10 @@
+use maa_framework::instance::TaskParam;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::json;
 
 use crate::{
     config::{award::AwardConfig, start_up::StartUpConfig},
-    MaaError,
+    MaaZError,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
@@ -33,13 +34,13 @@ impl From<TaskType> for TaskStatus {
 }
 
 impl TryFrom<String> for TaskType {
-    type Error = MaaError;
+    type Error = MaaZError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.as_str() {
             "StartUp" => Ok(TaskType::StartUp),
             "Award" => Ok(TaskType::Award),
-            _ => Err(MaaError::UnknowTaskError(value)),
+            _ => Err(MaaZError::UnknowTaskError(value)),
         }
     }
 }
@@ -59,22 +60,20 @@ impl TaskType {
     }
 }
 
-pub trait TaskParam: Serialize {
-    fn get_param(&self) -> Value;
-}
-
 #[derive(Serialize)]
 pub struct StartUpParam {
     pub package: String,
 }
 
 impl TaskParam for StartUpParam {
-    fn get_param(&self) -> Value {
-        #[allow(clippy::unwrap_used)]
-        let inner = serde_json::to_value(self).unwrap();
+    fn get_param(&self) -> String {
+        let inner = json!({
+            "package": self.package
+        });
         json!({
-            "sub_start_app": inner,
+            "sub_start_app": inner
         })
+        .to_string()
     }
 }
 
@@ -90,8 +89,8 @@ impl From<StartUpConfig> for StartUpParam {
 pub struct AwardParam;
 
 impl TaskParam for AwardParam {
-    fn get_param(&self) -> Value {
-        json!({})
+    fn get_param(&self) -> String {
+        json!({}).to_string()
     }
 }
 
