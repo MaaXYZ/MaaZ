@@ -111,6 +111,12 @@ impl TaskQueue {
         handle: &MaaInstance<CallbackEventHandler>,
         config: &Config,
     ) -> QueueStartStatus {
+
+        #[cfg(feature = "mock")]
+        {
+            return QueueStartStatus::Started;
+        }
+
         if !self.idle() {
             info!("Task queue is already running");
             return QueueStartStatus::AlreadyRunning;

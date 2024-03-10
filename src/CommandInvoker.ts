@@ -65,4 +65,8 @@ export default class CommandInvoker {
     public static async startMiniWindow(): Promise<void> {
         return invoke("start_mini_window");
     }
+
+    public static async closeWindow(): Promise<void> {
+        return invoke("close_window");
+    }
 }

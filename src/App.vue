@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { NFlex, NSplit, NConfigProvider, NMessageProvider } from "naive-ui";
 import DeviceConnection from "./views/DeviceConnection.vue";
 import TaskDispatch from "./views/TaskDispatch.vue";
 import { onMounted } from "vue";
 import CommandInvoker from "./CommandInvoker";
 import { useMaaStateStore } from "./stores/MaaStateStore";
-
-// const theme: GlobalThemeOverrides = {};
 
 const maaStateStore = useMaaStateStore();
 
@@ -16,29 +13,44 @@ onMounted(() => {
         maaStateStore.noteResourceInited();
     });
 });
+
+function closeWindow() {
+    CommandInvoker.closeWindow();
+}
 </script>
 
 <template>
-    <n-config-provider>
-        <n-message-provider>
-            <div class="select-none">
-                <n-flex class="h-screen">
-                    <n-split
-                        direction="horizontal"
-                        :max="0.4"
-                        :min="0.2"
-                        class="h-full"
-                        :default-size="0.3"
-                    >
-                        <template #1>
-                            <device-connection />
-                        </template>
-                        <template #2>
-                            <task-dispatch />
-                        </template>
-                    </n-split>
-                </n-flex>
+    <div class="h-screen w-full flex flex-col select-none">
+        <div
+            data-tauri-drag-region
+            class="app-heade h-10 select-none flex flex-row items-center justify-between p-2"
+        >
+            <div class="header">
+                <span class="text-lg text-center font-bold">MAA Z</span>
             </div>
-        </n-message-provider>
-    </n-config-provider>
+            <div class="controls">
+                <md-icon-button @click="closeWindow">
+                    <md-icon>close</md-icon>
+                </md-icon-button>
+            </div>
+        </div>
+        <div class="flex flex-row flex-grow">
+            <device-connection class="conn" />
+            <task-dispatch class="taskd" />
+        </div>
+    </div>
 </template>
+
+<style scoped>
+.conn {
+    width: 30%;
+}
+
+.taskd {
+    width: 70%;
+}
+
+.app_header {
+    background-color: var(--md-sys-color-surface);
+}
+</style>

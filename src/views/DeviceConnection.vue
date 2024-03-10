@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import DeviceItem from "@/components/DeviceItem.vue";
-import { NFlex, NList, NListItem, NSpin, NButton } from "naive-ui";
 import { useDeviceStateStore } from "@/stores/DeviceStateStore";
 
 const loadingDevices = ref(true);
@@ -28,45 +27,52 @@ function loadDevices() {
 </script>
 
 <template>
-    <n-flex vertical class="ml-3 mr-3 h-full">
-        <n-flex vertical>
+    <div class="flex flex-col h-full container">
+        <div class="flex justify-center">
             <p :class="connectedDeviceTitleClass">Connected Device</p>
-        </n-flex>
+        </div>
 
-        <n-flex vertical v-if="!deviceStateStore.isDeviceConnected">
+        <div class="flex flex-col" v-if="!deviceStateStore.isDeviceConnected">
             <p class="text_small">No device connected</p>
-        </n-flex>
+        </div>
 
         <device-item v-else :device="deviceStateStore.connectedDevice!" />
 
-        <n-flex
-            class="title_secondary"
-            align="center"
-            justify="center"
+        <div
+            class="title_secondary flex flex-row items-center align-middle justify-center"
             v-if="loadingDevices"
         >
-            <n-spin size="small"></n-spin>Searching for devices...
-        </n-flex>
-        <n-flex vertical v-else-if="deviceStateStore.devices.length == 0">
+            <md-circular-progress indeterminate></md-circular-progress>Searching
+            for devices...
+        </div>
+        <div
+            class="flex flex-col"
+            v-else-if="deviceStateStore.devices.length == 0"
+        >
             <p class="title_secondary">No devices found</p>
-            <n-button @click="loadDevices" strong type="primary"> Rescan Devices </n-button>
-        </n-flex>
-        <n-flex vertical v-else>
+            <md-filled-button @click="loadDevices" strong type="primary">
+                Rescan Devices
+            </md-filled-button>
+        </div>
+        <div class="flex flex-col justify-center items-center" v-else>
             <p>Available Devices</p>
-            <n-list class="rounded-lg bg-transparent" :hoverable="true" :clickable="true">
-                <n-list-item
-                    class="rounded-md"
+            <md-list class="device_list">
+                <md-list-item
                     v-for="device in deviceStateStore.devices"
                     :key="device.name"
                 >
                     <device-item :device="device" />
-                </n-list-item>
-            </n-list>
-        </n-flex>
-    </n-flex>
+                </md-list-item>
+            </md-list>
+        </div>
+    </div>
 </template>
 
 <style scoped>
+.device_list {
+    width: 95%;
+}
+
 .title_secondary {
     font-size: 1.5rem;
     color: #a0aec0;

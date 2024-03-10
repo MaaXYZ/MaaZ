@@ -7,7 +7,8 @@
   ],
   "permissions": [
     "event:allow-listen",
-    "notification:allow-is-permission-granted"
+    "notification:allow-is-permission-granted",
+    "window:allow-start-dragging"
   ],
   "platforms": [
     "linux",

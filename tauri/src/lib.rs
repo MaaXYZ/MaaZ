@@ -44,6 +44,10 @@ pub type ControllerInstance = Mutex<Option<MaaControllerInstance<CallbackEventHa
 #[allow(clippy::unwrap_used)]
 // TODO: Error handle instead of expect
 pub fn run() {
+
+    #[cfg(feature = "mock")]
+    println!("Running in MOCK mode");
+
     let _guard = init_tracing();
 
     tracing::info!("Starting Maa");
@@ -68,9 +72,13 @@ pub fn run() {
                 exit(1);
             }
 
+            #[cfg(debug_assertions)]
+            app.get_webview_window("main")
+                .expect("failed to get webview window")
+                .open_devtools();
+
             Ok(())
         })
-        .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             commands::device::find_devices,
             commands::device::connect_to_device,
@@ -82,6 +90,9 @@ pub fn run() {
             commands::task::remove_from_queue,
             commands::task::get_queue,
             commands::task::get_queue_state,
+            commands::window::close_window,
+            commands::window::minimize_window,
+            commands::window::maximize_window,
             commands::init_maa,
             commands::start_mini_window,
             commands::set_window_on_top,

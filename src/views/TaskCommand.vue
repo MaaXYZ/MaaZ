@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { useTaskQueueStore } from "@/stores/TaskQueueStore";
-import { NCard, NIcon, NDivider, NButton, useMessage } from "naive-ui";
-import { PlayFilledAlt as Play, StopFilledAlt as Stop } from "@vicons/carbon";
 import { ref, watch } from "vue";
 import { TaskType, allTaskTypes } from "@/interface/TaskStatus";
 import CommandInvoker from "@/CommandInvoker";
+import { useToast } from "vue-toast-notification";
 
 const taskQueueStore = useTaskQueueStore();
 
-const messager = useMessage();
+const toast = useToast();
 
 const outer = ref<HTMLDivElement | null>(null);
 const outerHeight = ref(0);
@@ -26,45 +25,40 @@ window.addEventListener("resize", () => {
 });
 
 function queueAction() {
+    console.log("queueAction");
     if (taskQueueStore.queueRunning) {
         taskQueueStore.stopQueue();
     } else if (taskQueueStore.hasPendingTasks) {
         taskQueueStore.startQueue();
     } else {
-        messager.warning("No task in queue");
+        toast.warning("No task in queue");
     }
 }
 
 function addTask(task: TaskType) {
     taskQueueStore.addToQueue(task).catch((err) => {
-        messager.error(err.message);
+        toast.error(err.message);
     });
 }
 
 function startMiniWindow() {
-    CommandInvoker.startMiniWindow().catch((e)=>{
-        messager.error(e.message);
-    })
+    CommandInvoker.startMiniWindow().catch((e) => {
+        toast.error(e.message);
+    });
 }
-
 </script>
 
 <template>
-    <n-card class="-mr-3 rounded-lg">
-        <div
-            ref="outer"
-            :style="{ height: outerHeight + 'px' }"
-            class="w-full flex flex-wrap justify-center items-center bg-slate-100 rounded-lg hover:bg-slate-200 duration-300"
-            @click="queueAction"
+    <div class="-mr-3 rounded-lg bg-white p-2 pt-4">
+        <md-filled-button class="w-full" @click="queueAction"
+            >Start
+            <md-icon slot="icon">play_arrow</md-icon>
+        </md-filled-button>
+        <md-outlined-button class="w-full mt-2" @click="startMiniWindow"
+            >Mini Window</md-outlined-button
         >
-            <n-icon :size="outerHeight * 0.5 + 'px'">
-                <Stop v-if="taskQueueStore.queueRunning" />
-                <Play v-else />
-            </n-icon>
-        </div>
-        <n-button class="w-full mt-2" @click="startMiniWindow">Mini Window</n-button>
-        <n-divider>Tasks</n-divider>
-        <n-button
+        <div class="h-2" />
+        <md-filled-tonal-button
             secondary
             type="primary"
             class="w-full mb-2"
@@ -73,8 +67,8 @@ function startMiniWindow() {
             @click="addTask(task)"
         >
             {{ task }}
-        </n-button>
-    </n-card>
+        </md-filled-tonal-button>
+    </div>
 </template>
 
 <style scoped></style>

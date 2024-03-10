@@ -7,7 +7,7 @@ const taskQueueStore = useTaskQueueStore();
 </script>
 
 <template>
-        <div  v-if="taskQueueStore.taskQueue.length>0" class="flex flex-nowrap overflow-x-auto overflow-y-hidden align-middle items-center">
+        <div  v-if="taskQueueStore.taskQueue.length>0" class="flex overflow-x-auto overflow-y-hidden align-middle items-center">
             <TaskQueueItem v-for="(task, index) in taskQueueStore.taskQueue" :key="index" :index="index" :task="task" />
         </div>
         <div v-else class="flex justify-center items-center">

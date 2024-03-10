@@ -9,8 +9,18 @@ use tauri::State;
 
 use crate::{ControllerInstance, Instance, MaaZError, MaaZResult};
 
+#[cfg(feature = "mock")]
+use super::mock;
+
 #[tauri::command]
 pub async fn find_devices(toolkit: State<'_, MaaToolkit>) -> MaaZResult<Vec<AdbDeviceInfo>> {
+
+    #[cfg(feature = "mock")]
+    {
+        let device = mock::mock_adb_device();
+        return Ok(vec![device]);
+    }
+
     let devices = toolkit.find_adb_device()?;
     Ok(devices)
 }
@@ -21,6 +31,14 @@ pub async fn connect_to_device(
     device: AdbDeviceInfo,
     controller: State<'_, Arc<ControllerInstance>>,
 ) -> MaaZResult<()> {
+
+    #[cfg(feature = "mock")]
+    {
+        // return OK after 5s
+        std::thread::sleep(std::time::Duration::from_secs(5));
+        return Ok(());
+    }
+
     let agent_path = "MaaAgentBinary";
 
     let controller_type = MaaAdbControllerType {

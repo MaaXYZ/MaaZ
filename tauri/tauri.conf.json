@@ -9,7 +9,8 @@
         "height": 720,
         "resizable": true,
         "title": "MaaZ",
-        "width": 1280
+        "width": 1280,
+        "decorations": false
       }
     ]
   },

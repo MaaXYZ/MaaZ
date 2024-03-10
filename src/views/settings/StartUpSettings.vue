@@ -1,41 +1,44 @@
 <script setup lang="ts">
-import { NFlex, NRadioGroup, NRadioButton, useMessage } from "naive-ui";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { ClientType, allClientTypes } from "@/interface/StartUpConfig";
 import { useMaaStateStore } from "@/stores/MaaStateStore";
+import MdcSelect from "@/components/mdc/select/MdcSelect.vue";
+import { useToast } from "vue-toast-notification";
 
 const maaStateStore = useMaaStateStore();
 
-const messager = useMessage();
+const toast = useToast();
+
+const clientTypeOptions = allClientTypes.map((cType) => {
+    return {
+        label: cType,
+        value: cType,
+    };
+});
 
 const clientType = ref<ClientType>(
     maaStateStore.config?.startUp.clientType ?? "Official"
 );
 
 function setClientType(v: ClientType) {
-    clientType.value = v;
-    maaStateStore.setClientType(clientType.value).catch((error) => {
-        messager.error(error.message);
+    maaStateStore.setClientType(v).catch((error) => {
+        toast.error(error.message);
     });
 }
+
+watch(clientType, (v) => {
+    setClientType(v);
+});
 </script>
 
 <template>
-    <n-flex vertical>
-        <n-flex class="settings_item" justify="space-between">
-            <p>Client Type</p>
-            <n-radio-group
-                :value="clientType"
-                @update:value="(v:ClientType)=>{setClientType(v)}"
-            >
-                <n-radio-button
-                    v-for="cType in allClientTypes"
-                    :key="cType"
-                    :value="cType"
-                >
-                    {{ cType }}
-                </n-radio-button>
-            </n-radio-group>
-        </n-flex>
-    </n-flex>
+    <div>
+        <div class="settings_item flex flex-row justify-between">
+            <p class="label">Client Type</p>
+            <MdcSelect
+                v-model="clientType"
+                :options="clientTypeOptions"
+            ></MdcSelect>
+        </div>
+    </div>
 </template>

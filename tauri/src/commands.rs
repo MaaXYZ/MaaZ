@@ -13,6 +13,10 @@ use crate::{Instance, MaaZResult, ResourceInstance};
 pub mod config;
 pub mod device;
 pub mod task;
+pub mod window;
+
+#[cfg(feature = "mock")]
+mod mock;
 
 #[tauri::command]
 pub async fn init_maa(
