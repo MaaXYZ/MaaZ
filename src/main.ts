@@ -23,6 +23,7 @@ import '@material/web/select/filled-select'
 import '@material/web/select/outlined-select'
 import '@material/web/tabs/tabs'
 import '@material/web/tabs/secondary-tab'
+import '@material/web/ripple/ripple'
 
 const app = createApp(App);
 

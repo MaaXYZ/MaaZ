@@ -193,7 +193,8 @@ pub enum MaaZError {
     ConnectionError,
     QueueDidnotStart,
     UnknowTaskError(String),
-    MaaZInnerError(String)
+    MaaZInnerError(String),
+    WindowNotFoundError(String)
 }
 
 impl From<std::str::Utf8Error> for MaaZError {

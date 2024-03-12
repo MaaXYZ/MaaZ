@@ -9,6 +9,8 @@ export const useMaaStateStore = defineStore("maa-state", {
         return {
             resourceInited: false,
             config: null as MaaConfig | null,
+
+            miniWindowOpened: false
         };
     },
     getters: {

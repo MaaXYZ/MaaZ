@@ -6,10 +6,10 @@
 use std::sync::Arc;
 
 use maa_framework::MaaStatus;
-use tauri::{AppHandle, State, Window};
+use tauri::{AppHandle, Manager, State, Window};
 use tracing::{trace, trace_span};
 
-use crate::{Instance, MaaZResult, ResourceInstance};
+use crate::{Instance, MaaZError, MaaZResult, ResourceInstance};
 pub mod config;
 pub mod device;
 pub mod task;

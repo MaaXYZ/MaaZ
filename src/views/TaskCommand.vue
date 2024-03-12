@@ -4,8 +4,10 @@ import { ref, watch } from "vue";
 import { TaskType, allTaskTypes } from "@/interface/TaskStatus";
 import CommandInvoker from "@/CommandInvoker";
 import { useToast } from "vue-toast-notification";
+import { useMaaStateStore } from "@/stores/MaaStateStore";
 
 const taskQueueStore = useTaskQueueStore();
+const maaStateStore = useMaaStateStore();
 
 const toast = useToast();
 
@@ -42,9 +44,13 @@ function addTask(task: TaskType) {
 }
 
 function startMiniWindow() {
-    CommandInvoker.startMiniWindow().catch((e) => {
-        toast.error(e.message);
-    });
+    CommandInvoker.startMiniWindow()
+        .then(() => {
+            maaStateStore.miniWindowOpened = true;
+        })
+        .catch((e) => {
+            toast.error(e.message);
+        });
 }
 </script>
 
@@ -54,6 +60,8 @@ function startMiniWindow() {
             >Start
             <md-icon slot="icon">play_arrow</md-icon>
         </md-filled-button>
+
+        <!-- TODO: figure out how to change state with mini window open state -->
         <md-outlined-button class="w-full mt-2" @click="startMiniWindow"
             >Mini Window</md-outlined-button
         >

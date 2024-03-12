@@ -1,20 +1,27 @@
 <script setup lang="ts">
-import TaskStatus from '@/interface/TaskStatus';
-import { computed, ref } from 'vue';
-import { useTaskQueueStore } from '@/stores/TaskQueueStore';
-import IndeterminedProgressBar from './IndeterminedProgressBar.vue';
-
-const taskQueueStore = useTaskQueueStore();
+import TaskStatus from "@/interface/TaskStatus";
+import { computed, onMounted, ref } from "vue";
+import IndeterminedProgressBar from "./IndeterminedProgressBar.vue";
+import { MdRipple } from "@material/web/ripple/ripple";
 
 const props = defineProps<{
-    index: number,
-    task: TaskStatus
+    index: number;
+    task: TaskStatus;
 }>();
 
 const showRemoveButton = ref(false);
 
+const ripple = ref<MdRipple | null>(null);
+const outer = ref<HTMLDivElement | null>(null);
+
+onMounted(() => {
+    if (outer.value && ripple.value ) {
+        ripple.value.attach(outer.value)
+    }
+});
+
 function mouseEnter() {
-    if (props.task.state!=="Running") {
+    if (props.task.state !== "Running") {
         showRemoveButton.value = true;
     }
 }
@@ -34,24 +41,34 @@ const backgroundColor = computed(() => {
         return "#EBEBE4";
     }
 });
-
 </script>
 
 <template>
-    <div @mouseenter="mouseEnter" :style="{ backgroundColor:backgroundColor }" @mouseleave="mouseLeave" class="item mx-1 flex flex-col text-center items-center">
-        <p class="text-center">{{ props.task.taskType }}</p>
-        <indetermined-progress-bar v-if="props.task.state==='Running'" class="w-11/12"></indetermined-progress-bar>
-        <md-outlined-button v-if="showRemoveButton" class="w-full" @click="taskQueueStore.removeFromQueue(props.index)">Remove</md-outlined-button>
+    <div
+        @mouseenter="mouseEnter"
+        :style="{ backgroundColor: backgroundColor }"
+        @mouseleave="mouseLeave"
+        ref="outer"
+        class="item mx-1 text-center items-center shadow relative"
+    >
+    <md-ripple ref="ripple"></md-ripple>
+        <div class="flex flex-col w-full h-full layer">
+            <p class="text-center">{{ props.task.taskType }}</p>
+            <indetermined-progress-bar
+                v-if="props.task.state === 'Running'"
+                class="w-11/12"
+            ></indetermined-progress-bar>
+        </div>
     </div>
 </template>
 
 <style scope>
-
 .item {
     min-width: 150px;
     width: 150px;
     height: 60px;
     border-radius: 0.5rem;
+    background-color: var(--md-ref-palette-neutral95);
 }
 
 </style>
